@@ -19,27 +19,31 @@ var io = new socket_io_1.Server(httpServer, {
 var clients = [];
 var cagnottes = [];
 var votesRoom = [];
+function getClientByID(clientId) {
+    console.log(clientId, "client id");
+    return clients.find(function (client) { return client.id == clientId; });
+    //   return clientId;
+}
 function getAllClientsWithSameRoom(room) {
     return clients.filter(function (e) { return e.room === room; });
 }
 io.on("connection", function (socket) {
     console.log("🟢 new connection");
+    console.log(socket.client.id);
     socket.on("test", function (data) {
         socket.join(data.room);
         console.log("🧪 test");
-        console.log(data);
-        io.to(data.room).emit("testResponse", {
-            test: "stringtest",
-            socketId: socket,
-            idClient: data.idClient
-        });
+        console.log(getClientByID(socket.client.id));
+        console.log(clients);
     });
-    socket.on("disconnect", function () {
+    socket.on("disconnect", function (data) {
+        console.log(getClientByID(socket.client.id));
         console.log("🔴 user disconnect");
     });
     socket.on("joinRoom", function (data) {
         socket.join(data.room);
         var newPlayer = {
+            id: socket.client.id,
             idClient: data.idClient,
             room: data.room,
             name: data.name,
@@ -48,7 +52,7 @@ io.on("connection", function (socket) {
             ptsCagnotte: 0
         };
         clients.push(newPlayer);
-        console.log(getAllClientsWithSameRoom(data.room));
+        console.log(clients);
         io.to(data.room).emit("joinRoomResponse", data);
         io.to(data.room).emit("joinPlayerResponse", {
             player: newPlayer
