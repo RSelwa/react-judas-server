@@ -37,18 +37,15 @@ function getAllClientsWithSameRoom(room) {
 }
 io.on("connection", (socket) => {
   console.log("🟢 new connection");
-  console.log(socket.client.id);
 
   socket.on("test", (data: { room: string; idClient: string }) => {
     socket.join(data.room);
     console.log("🧪 test");
-    console.log(getClientByID(socket.client.id));
-    console.log(clients);
   });
 
   socket.on("disconnect", (data) => {
-    console.log(getClientByID(socket.client.id));
     console.log("🔴 user disconnect");
+    clients.splice(clients.indexOf(getClientByID(socket.client.id)), 1);
   });
   socket.on(
     "joinRoom",
@@ -64,7 +61,6 @@ io.on("connection", (socket) => {
         ptsCagnotte: 0,
       };
       clients.push(newPlayer);
-      console.log(clients);
       io.to(data.room).emit("joinRoomResponse", data);
       io.to(data.room).emit("joinPlayerResponse", {
         player: newPlayer,
