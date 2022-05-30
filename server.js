@@ -20,7 +20,6 @@ var clients = [];
 var cagnottes = [];
 var votesRoom = [];
 function getClientByID(clientId) {
-    console.log(clientId, "client id");
     return clients.find(function (client) { return client.id == clientId; });
     //   return clientId;
 }
@@ -28,7 +27,7 @@ function getAllClientsWithSameRoom(room) {
     return clients.filter(function (e) { return e.room === room; });
 }
 io.on("connection", function (socket) {
-    console.log("🟢 new connection");
+    console.log("🟢 new connection", socket.client.id);
     socket.on("test", function (data) {
         socket.join(data.room);
         console.log("🧪 test");
@@ -53,6 +52,7 @@ io.on("connection", function (socket) {
         io.to(data.room).emit("joinPlayerResponse", {
             player: newPlayer
         });
+        console.log(clients);
     });
 });
 var PORT = process.env.port || 6602;

@@ -28,7 +28,6 @@ let clients: Player[] = [];
 let cagnottes = [];
 let votesRoom = [];
 function getClientByID(clientId: string) {
-  console.log(clientId, "client id");
   return clients.find((client) => client.id == clientId);
   //   return clientId;
 }
@@ -36,7 +35,7 @@ function getAllClientsWithSameRoom(room) {
   return clients.filter((e) => e.room === room);
 }
 io.on("connection", (socket) => {
-  console.log("🟢 new connection");
+  console.log("🟢 new connection", socket.client.id);
 
   socket.on("test", (data: { room: string; idClient: string }) => {
     socket.join(data.room);
@@ -65,6 +64,7 @@ io.on("connection", (socket) => {
       io.to(data.room).emit("joinPlayerResponse", {
         player: newPlayer,
       });
+      console.log(clients);
     }
   );
 });
