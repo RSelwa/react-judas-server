@@ -50,9 +50,8 @@ io.on("connection", function (socket) {
         clients.push(newPlayer);
         io.to(data.room).emit("joinRoomResponse", data);
         io.to(data.room).emit("joinPlayerResponse", {
-            player: newPlayer
+            players: getAllClientsWithSameRoom(data.room)
         });
-        console.log(clients);
     });
 });
 var PORT = process.env.port || 6602;
