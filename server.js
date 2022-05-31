@@ -108,6 +108,7 @@ io.on("connection", function (socket) {
     });
     socket.on("modifyCagnottes", function (data) {
         try {
+            //todo disable negative subs
             data.isCagnottesTraitor
                 ? (returnCagnotteOfRoom(data.room).traitorValue += data.value)
                 : (returnCagnotteOfRoom(data.room).innocentValue += data.value);
