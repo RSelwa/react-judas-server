@@ -34,14 +34,21 @@ type Room = {
   inGame: boolean;
   players: Player[];
   cagnotte: Cagnotte;
+  votes: Vote[];
+  votesLaunched: boolean;
   traitorId: string;
+};
+type Vote = {
+  from: Player;
+  to: Player;
+  confirm: boolean;
 };
 const controllerName: string = "c";
 const viewerName: string = "v";
 let clients: Player[] = [];
 let rooms: Room[] = [];
 // let cagnottes: Cagnotte[] = [];
-let votesRoom = [];
+// let votesRoom = [];
 function getClientByID(clientId: string) {
   //* get the id of the client in all the clients
   return clients.find((client) => client.id == clientId);
@@ -79,7 +86,12 @@ io.on("connection", (socket) => {
     });
   }
 
-  socket.on("test", (data: any) => {});
+  socket.on("test", (data: { room: string }) => {
+    const room = getTheRoom(data.room);
+    console.log(getRealPlayers(data.room));
+    // console.log(room);
+    // io.to(data.room).emit("testResponse", {});
+  });
 
   socket.on("disconnect", (data: any) => {
     console.log("🔴 user disconnect");
@@ -161,6 +173,8 @@ io.on("connection", (socket) => {
             traitorValue: 0,
             innocentValue: 0,
           },
+          votes: [],
+          votesLaunched: false,
           traitorId: "",
         });
       }
@@ -206,24 +220,30 @@ io.on("connection", (socket) => {
       updatePlayers(data.room);
     }
   );
+  //# start game
   socket.on("selectTraitor", (data: { room: string }) => {
     const room: Room = getTheRoom(data.room);
     const realPlayers: Player[] = getRealPlayers(data.room);
-    const randomTraitor: Player =
-      realPlayers[Math.floor(Math.random() * realPlayers.length)];
-    room.traitorId = randomTraitor.idClient;
-    room.players.find((player) => player == randomTraitor).isTraitor = true;
-    updatePlayers(data.room);
+    if (realPlayers.length > 0) {
+      const randomTraitor: Player =
+        realPlayers[Math.floor(Math.random() * realPlayers.length)];
+      room.traitorId = randomTraitor.idClient;
+      room.players.find((player) => player == randomTraitor).isTraitor = true;
+      updatePlayers(data.room);
+    }
   });
+  //# stop game
 
   socket.on("resetTraitor", (data: { room: string }) => {
     const room: Room = getTheRoom(data.room);
     const playerTraitor: Player = room.players.find(
       (player: Player) => player.isTraitor == true
     );
-    playerTraitor.isTraitor = false;
-    room.traitorId = "";
-    updatePlayers(data.room);
+    if (playerTraitor) {
+      playerTraitor.isTraitor = false;
+      room.traitorId = "";
+      updatePlayers(data.room);
+    }
   });
   socket.on("toggleGameStatus", (data: { room: string; inGame: boolean }) => {
     io.to(data.room).emit("statusGameResponse", {
@@ -231,6 +251,48 @@ io.on("connection", (socket) => {
     });
     console.log(!data.inGame ? "🟩 now in game" : "🟥 no game");
   });
+  socket.on("launchVote", (data: { room: string }) => {
+    console.log("✉️ votes initiate");
+    const room: Room = getTheRoom(data.room);
+    room.votesLaunched = true;
+    io.to(data.room).emit("launchVoteResponse", {
+      votesLaunched: room.votesLaunched,
+    });
+    io.to(data.room).emit("sendPLayersForVOtes", {
+      playersForVotes: getRealPlayers(data.room),
+    });
+  });
+  socket.on("stopVote", (data: { room: string }) => {
+    console.log("❌ votes stop");
+    const room: Room = getTheRoom(data.room);
+    room.votesLaunched = false;
+    io.to(data.room).emit("launchVoteResponse", {
+      votesLaunched: room.votesLaunched,
+    });
+  });
+  socket.on(
+    "vote",
+    (data: { room: string; playerVotedFor: Player; clientId: string }) => {
+      console.log("📩 vote received");
+      const room: Room = getTheRoom(data.room);
+      const from: Player = getRealPlayers(data.room).find(
+        (player: Player) => player.idClient == data.clientId
+      );
+      const to: Player = data.playerVotedFor;
+      const voteAlreadyExist: Vote = room.votes.find(
+        (vote: Vote) => vote.from == from
+      );
+      if (!voteAlreadyExist) {
+        console.log("doesn exist");
+        room.votes.push({ from: from, to: to, confirm: false });
+      } else {
+        const voteindex: number = room.votes.findIndex(
+          (vote: Vote) => vote.from == from
+        );
+        room.votes[voteindex].to = to;
+      }
+    }
+  );
 });
 
 const PORT = process.env.port || 6602;

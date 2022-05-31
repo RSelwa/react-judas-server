@@ -21,7 +21,7 @@ var viewerName = "v";
 var clients = [];
 var rooms = [];
 // let cagnottes: Cagnotte[] = [];
-var votesRoom = [];
+// let votesRoom = [];
 function getClientByID(clientId) {
     //* get the id of the client in all the clients
     return clients.find(function (client) { return client.id == clientId; });
@@ -55,7 +55,12 @@ io.on("connection", function (socket) {
             cagnotte: cagnotte
         });
     }
-    socket.on("test", function (data) { });
+    socket.on("test", function (data) {
+        var room = getTheRoom(data.room);
+        console.log(getRealPlayers(data.room));
+        // console.log(room);
+        // io.to(data.room).emit("testResponse", {});
+    });
     socket.on("disconnect", function (data) {
         console.log("🔴 user disconnect");
         var clientOnClients = getClientByID(socketClientId);
@@ -123,6 +128,8 @@ io.on("connection", function (socket) {
                     traitorValue: 0,
                     innocentValue: 0
                 },
+                votes: [],
+                votesLaunched: false,
                 traitorId: ""
             });
         }
@@ -159,26 +166,66 @@ io.on("connection", function (socket) {
         }
         updatePlayers(data.room);
     });
+    //# start game
     socket.on("selectTraitor", function (data) {
         var room = getTheRoom(data.room);
         var realPlayers = getRealPlayers(data.room);
-        var randomTraitor = realPlayers[Math.floor(Math.random() * realPlayers.length)];
-        room.traitorId = randomTraitor.idClient;
-        room.players.find(function (player) { return player == randomTraitor; }).isTraitor = true;
-        updatePlayers(data.room);
+        if (realPlayers.length > 0) {
+            var randomTraitor_1 = realPlayers[Math.floor(Math.random() * realPlayers.length)];
+            room.traitorId = randomTraitor_1.idClient;
+            room.players.find(function (player) { return player == randomTraitor_1; }).isTraitor = true;
+            updatePlayers(data.room);
+        }
     });
+    //# stop game
     socket.on("resetTraitor", function (data) {
         var room = getTheRoom(data.room);
         var playerTraitor = room.players.find(function (player) { return player.isTraitor == true; });
-        playerTraitor.isTraitor = false;
-        room.traitorId = "";
-        updatePlayers(data.room);
+        if (playerTraitor) {
+            playerTraitor.isTraitor = false;
+            room.traitorId = "";
+            updatePlayers(data.room);
+        }
     });
     socket.on("toggleGameStatus", function (data) {
         io.to(data.room).emit("statusGameResponse", {
             inGame: !data.inGame
         });
         console.log(!data.inGame ? "🟩 now in game" : "🟥 no game");
+    });
+    socket.on("launchVote", function (data) {
+        console.log("✉️ votes initiate");
+        var room = getTheRoom(data.room);
+        room.votesLaunched = true;
+        io.to(data.room).emit("launchVoteResponse", {
+            votesLaunched: room.votesLaunched
+        });
+        io.to(data.room).emit("sendPLayersForVOtes", {
+            playersForVotes: getRealPlayers(data.room)
+        });
+    });
+    socket.on("stopVote", function (data) {
+        console.log("❌ votes stop");
+        var room = getTheRoom(data.room);
+        room.votesLaunched = false;
+        io.to(data.room).emit("launchVoteResponse", {
+            votesLaunched: room.votesLaunched
+        });
+    });
+    socket.on("vote", function (data) {
+        console.log("📩 vote received");
+        var room = getTheRoom(data.room);
+        var from = getRealPlayers(data.room).find(function (player) { return player.idClient == data.clientId; });
+        var to = data.playerVotedFor;
+        var voteAlreadyExist = room.votes.find(function (vote) { return vote.from == from; });
+        if (!voteAlreadyExist) {
+            console.log("doesn exist");
+            room.votes.push({ from: from, to: to, confirm: false });
+        }
+        else {
+            var voteindex = room.votes.findIndex(function (vote) { return vote.from == from; });
+            room.votes[voteindex].to = to;
+        }
     });
 });
 var PORT = process.env.port || 6602;
