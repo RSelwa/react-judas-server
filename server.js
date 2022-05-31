@@ -163,12 +163,15 @@ io.on("connection", function (socket) {
         var room = getTheRoom(data.room);
         var realPlayers = getRealPlayers(data.room);
         var randomTraitor = realPlayers[Math.floor(Math.random() * realPlayers.length)];
-        console.log(randomTraitor);
         room.traitorId = randomTraitor.idClient;
         room.players.find(function (player) { return player == randomTraitor; }).isTraitor = true;
-        // io.to(data.room).emit("selecttraitorResponse", {
-        //   traitorId: room.traitorId,
-        // });
+        updatePlayers(data.room);
+    });
+    socket.on("resetTraitor", function (data) {
+        var room = getTheRoom(data.room);
+        var playerTraitor = room.players.find(function (player) { return player.isTraitor == true; });
+        playerTraitor.isTraitor = false;
+        room.traitorId = "";
         updatePlayers(data.room);
     });
     socket.on("toggleGameStatus", function (data) {

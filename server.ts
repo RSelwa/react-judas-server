@@ -211,12 +211,18 @@ io.on("connection", (socket) => {
     const realPlayers: Player[] = getRealPlayers(data.room);
     const randomTraitor: Player =
       realPlayers[Math.floor(Math.random() * realPlayers.length)];
-    console.log(randomTraitor);
     room.traitorId = randomTraitor.idClient;
     room.players.find((player) => player == randomTraitor).isTraitor = true;
-    // io.to(data.room).emit("selecttraitorResponse", {
-    //   traitorId: room.traitorId,
-    // });
+    updatePlayers(data.room);
+  });
+
+  socket.on("resetTraitor", (data: { room: string }) => {
+    const room: Room = getTheRoom(data.room);
+    const playerTraitor: Player = room.players.find(
+      (player: Player) => player.isTraitor == true
+    );
+    playerTraitor.isTraitor = false;
+    room.traitorId = "";
     updatePlayers(data.room);
   });
   socket.on("toggleGameStatus", (data: { room: string; inGame: boolean }) => {
