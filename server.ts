@@ -35,7 +35,7 @@ function getAllClientsWithSameRoom(room, onlyPlayers: boolean = true) {
   let result;
   onlyPlayers
     ? (result = clients.filter(
-        (e) => e.room === room && e.name != ("controller" || "viewer")
+        (e) => e.room === room && e.name != "controller" && e.name != "viewer"
       ))
     : (result = clients.filter((e) => e.room === room));
   return result;
@@ -52,8 +52,6 @@ io.on("connection", (socket) => {
   socket.on("test", (data: any) => {
     socket.join(data.room);
     console.log("🧪 test");
-
-    console.log(clients);
     io.to(data.room).emit("testResponse", {});
   });
 
@@ -79,23 +77,23 @@ io.on("connection", (socket) => {
         ptsCagnotte: 0,
       };
       clients.push(newPlayer);
-      io.to(data.room).emit("joinRoomResponse", {
+      socket.emit("joinRoomResponse", {
         room: data.room,
       });
-      socket.emit("testResponse");
       switch (data.name) {
         case "controller":
+          socket.emit("joinControllerResponse", {});
           break;
         case "viewer":
+          socket.emit("joinViewerResponse", {});
           break;
 
         default:
+          socket.emit("joinPlayerResponse", {});
           break;
       }
+      console.log(getAllClientsWithSameRoom(data.room));
       updatePlayers(data.room);
-      // io.to(data.room).emit("updatePlayerResponse", {
-      //   players: getAllClientsWithSameRoom(data.room),
-      // });
     }
   );
 });

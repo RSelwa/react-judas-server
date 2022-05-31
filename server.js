@@ -27,7 +27,7 @@ function getAllClientsWithSameRoom(room, onlyPlayers) {
     if (onlyPlayers === void 0) { onlyPlayers = true; }
     var result;
     onlyPlayers
-        ? (result = clients.filter(function (e) { return e.room === room && e.name != ("controller" || "viewer"); }))
+        ? (result = clients.filter(function (e) { return e.room === room && e.name != "controller" && e.name != "viewer"; }))
         : (result = clients.filter(function (e) { return e.room === room; }));
     return result;
 }
@@ -41,7 +41,6 @@ io.on("connection", function (socket) {
     socket.on("test", function (data) {
         socket.join(data.room);
         console.log("🧪 test");
-        console.log(clients);
         io.to(data.room).emit("testResponse", {});
     });
     socket.on("disconnect", function (data) {
@@ -64,22 +63,22 @@ io.on("connection", function (socket) {
             ptsCagnotte: 0
         };
         clients.push(newPlayer);
-        io.to(data.room).emit("joinRoomResponse", {
+        socket.emit("joinRoomResponse", {
             room: data.room
         });
-        socket.emit("testResponse");
         switch (data.name) {
             case "controller":
+                socket.emit("joinControllerResponse", {});
                 break;
             case "viewer":
+                socket.emit("joinViewerResponse", {});
                 break;
             default:
+                socket.emit("joinPlayerResponse", {});
                 break;
         }
+        console.log(getAllClientsWithSameRoom(data.room));
         updatePlayers(data.room);
-        // io.to(data.room).emit("updatePlayerResponse", {
-        //   players: getAllClientsWithSameRoom(data.room),
-        // });
     });
 });
 var PORT = process.env.port || 6602;
