@@ -33,16 +33,21 @@ function getTheRoom(dataRoom) {
 io.on("connection", function (socket) {
     var socketClientId = socket.client.id;
     console.log("🟢 new connection", socketClientId);
-    function updatePlayers(dataRoom) {
+    function updateRoom(room) {
+        updatePlayers(room);
+        updateCagnottes(room, getTheRoom(room).cagnotte);
+    }
+    function updatePlayers(room) {
         //* function that send all players except controller and viewer
-        io.to(dataRoom).emit("updatePlayerResponse", {
-            players: getTheRoom(dataRoom).players.filter(function (player) {
+        console.log("e");
+        io.to(room).emit("updatePlayerResponse", {
+            players: getTheRoom(room).players.filter(function (player) {
                 return player.name != controllerName && player.name != viewerName;
             })
         });
     }
-    function updateCagnottes(dataRoom, cagnotte) {
-        io.to(dataRoom).emit("updateCagnottesResponse", {
+    function updateCagnottes(room, cagnotte) {
+        io.to(room).emit("updateCagnottesResponse", {
             cagnotte: cagnotte
         });
     }
@@ -50,10 +55,8 @@ io.on("connection", function (socket) {
     socket.on("disconnect", function (data) {
         console.log("🔴 user disconnect");
         var clientOnClients = getClientByID(socketClientId);
+        //* if clients exists in clients
         if (clientOnClients) {
-            //*remove players from clients
-            clients.splice(clients.indexOf(clientOnClients), 1);
-            updatePlayers(clientOnClients.room);
             //* find the room of the player
             var roomOfPlayer_1 = rooms.find(function (room) { return room.name == clientOnClients.room; });
             //* trouve le joueur dans room.player qui correspond à l'clientOnClients (qui est notre joueur deconnecté by id), puis le supprime de room.players
@@ -63,8 +66,9 @@ io.on("connection", function (socket) {
                 var roomInRooms = rooms.find(function (room) { return room == roomOfPlayer_1; });
                 rooms.splice(rooms.indexOf(roomInRooms), 1);
             }
-            console.log(roomOfPlayer_1.players, "room leaved");
-            // roomOfPlayer.players.find((player: Player) => player == clientOnClients);
+            //*remove players from clients
+            clients.splice(clients.indexOf(clientOnClients), 1);
+            updatePlayers(clientOnClients.room);
         }
     });
     socket.on("joinRoom", function (data) {
@@ -113,29 +117,25 @@ io.on("connection", function (socket) {
             });
         }
         rooms.find(function (e) { return e.name == data.room; }).players.push(newPlayer);
-        console.log(rooms.find(function (e) { return e.name == data.room; }).players, "room joigned");
-        updatePlayers(data.room);
-        // if (cagnottes.find((e) => e.room == data.room) == undefined) {
-        //   cagnottes.push({ room: data.room, innocentValue: 0, traitorValue: 0 });
-        // }
-        // updateCagnottes(data.room, returnCagnotteOfRoom(data.room));
+        updateRoom(data.room);
+        // updatePlayers(data.room);
+        // updateCagnottes(data.room, getTheRoom(data.room).cagnotte);
     });
     socket.on("modifyCagnottes", function (data) {
-        // try {
-        //   //todo disable negative subs
-        //   data.isCagnottesTraitor
-        //     ? (returnCagnotteOfRoom(data.room).traitorValue += data.value)
-        //     : (returnCagnotteOfRoom(data.room).innocentValue += data.value);
-        // } catch (error) {}
-        // updateCagnottes(data.room, returnCagnotteOfRoom(data.room));
+        var room = getTheRoom(data.room);
+        console.log(room.cagnotte);
+        data.isCagnottesTraitor
+            ? (room.cagnotte.traitorValue += data.value)
+            : (room.cagnotte.innocentValue += data.value);
+        updateCagnottes(data.room, room.cagnotte);
     });
     socket.on("resetCagnottes", function (data) {
-        // try {
-        //   data.isCagnottesTraitor
-        //     ? (returnCagnotteOfRoom(data.room).traitorValue = 0)
-        //     : (returnCagnotteOfRoom(data.room).innocentValue = 0);
-        // } catch (error) {}
-        // updateCagnottes(data.room, returnCagnotteOfRoom(data.room));
+        var room = getTheRoom(data.room);
+        console.log(room.cagnotte);
+        data.isCagnottesTraitor
+            ? (room.cagnotte.traitorValue = 0)
+            : (room.cagnotte.innocentValue = 0);
+        updateCagnottes(data.room, room.cagnotte);
     });
     socket.on("modifyPlayerPts", function (data) {
         var playerIndex = clients.findIndex(function (e) { return e.id == data.playerId; });
