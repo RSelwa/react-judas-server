@@ -23,18 +23,34 @@ function getClientByID(clientId) {
     return clients.find(function (client) { return client.id == clientId; });
     //   return clientId;
 }
-function getAllClientsWithSameRoom(room) {
-    return clients.filter(function (e) { return e.room === room; });
+function getAllClientsWithSameRoom(room, onlyPlayers) {
+    if (onlyPlayers === void 0) { onlyPlayers = true; }
+    var result;
+    onlyPlayers
+        ? (result = clients.filter(function (e) { return e.room === room && e.name != ("controller" || "viewer"); }))
+        : (result = clients.filter(function (e) { return e.room === room; }));
+    return result;
 }
 io.on("connection", function (socket) {
     console.log("🟢 new connection", socket.client.id);
+    function updatePlayers(dataRoom) {
+        io.to(dataRoom).emit("updatePlayerResponse", {
+            players: getAllClientsWithSameRoom(dataRoom)
+        });
+    }
     socket.on("test", function (data) {
         socket.join(data.room);
         console.log("🧪 test");
+        console.log(clients);
+        io.to(data.room).emit("testResponse", {});
     });
     socket.on("disconnect", function (data) {
         console.log("🔴 user disconnect");
-        clients.splice(clients.indexOf(getClientByID(socket.client.id)), 1);
+        var clientOnClients = getClientByID(socket.client.id);
+        if (clientOnClients) {
+            clients.splice(clients.indexOf(clientOnClients), 1);
+            updatePlayers(clientOnClients.room);
+        }
     });
     socket.on("joinRoom", function (data) {
         socket.join(data.room);
@@ -48,10 +64,22 @@ io.on("connection", function (socket) {
             ptsCagnotte: 0
         };
         clients.push(newPlayer);
-        io.to(data.room).emit("joinRoomResponse", data);
-        io.to(data.room).emit("joinPlayerResponse", {
-            players: getAllClientsWithSameRoom(data.room)
+        io.to(data.room).emit("joinRoomResponse", {
+            room: data.room
         });
+        socket.emit("testResponse");
+        switch (data.name) {
+            case "controller":
+                break;
+            case "viewer":
+                break;
+            default:
+                break;
+        }
+        updatePlayers(data.room);
+        // io.to(data.room).emit("updatePlayerResponse", {
+        //   players: getAllClientsWithSameRoom(data.room),
+        // });
     });
 });
 var PORT = process.env.port || 6602;

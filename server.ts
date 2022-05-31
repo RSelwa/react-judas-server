@@ -17,7 +17,7 @@ const io = new Server(httpServer, {
 });
 type Player = {
   id?: string;
-  idClient: string;
+  idClient?: string;
   room: string;
   name: string;
   pts: number;
@@ -31,20 +31,39 @@ function getClientByID(clientId: string) {
   return clients.find((client) => client.id == clientId);
   //   return clientId;
 }
-function getAllClientsWithSameRoom(room) {
-  return clients.filter((e) => e.room === room);
+function getAllClientsWithSameRoom(room, onlyPlayers: boolean = true) {
+  let result;
+  onlyPlayers
+    ? (result = clients.filter(
+        (e) => e.room === room && e.name != ("controller" || "viewer")
+      ))
+    : (result = clients.filter((e) => e.room === room));
+  return result;
 }
 io.on("connection", (socket) => {
   console.log("🟢 new connection", socket.client.id);
 
-  socket.on("test", (data: { room: string; idClient: string }) => {
+  function updatePlayers(dataRoom: string) {
+    io.to(dataRoom).emit("updatePlayerResponse", {
+      players: getAllClientsWithSameRoom(dataRoom),
+    });
+  }
+
+  socket.on("test", (data: any) => {
     socket.join(data.room);
     console.log("🧪 test");
+
+    console.log(clients);
+    io.to(data.room).emit("testResponse", {});
   });
 
   socket.on("disconnect", (data) => {
     console.log("🔴 user disconnect");
-    clients.splice(clients.indexOf(getClientByID(socket.client.id)), 1);
+    const clientOnClients: Player = getClientByID(socket.client.id);
+    if (clientOnClients) {
+      clients.splice(clients.indexOf(clientOnClients), 1);
+      updatePlayers(clientOnClients.room);
+    }
   });
   socket.on(
     "joinRoom",
@@ -60,10 +79,23 @@ io.on("connection", (socket) => {
         ptsCagnotte: 0,
       };
       clients.push(newPlayer);
-      io.to(data.room).emit("joinRoomResponse", data);
-      io.to(data.room).emit("joinPlayerResponse", {
-        players: getAllClientsWithSameRoom(data.room),
+      io.to(data.room).emit("joinRoomResponse", {
+        room: data.room,
       });
+      socket.emit("testResponse");
+      switch (data.name) {
+        case "controller":
+          break;
+        case "viewer":
+          break;
+
+        default:
+          break;
+      }
+      updatePlayers(data.room);
+      // io.to(data.room).emit("updatePlayerResponse", {
+      //   players: getAllClientsWithSameRoom(data.room),
+      // });
     }
   );
 });
