@@ -115,6 +115,15 @@ io.on("connection", function (socket) {
         catch (error) { }
         updateCagnottes(data.room, returnCagnotteOfRoom(data.room));
     });
+    socket.on("resetCagnottes", function (data) {
+        try {
+            data.isCagnottesTraitor
+                ? (returnCagnotteOfRoom(data.room).traitorValue = 0)
+                : (returnCagnotteOfRoom(data.room).innocentValue = 0);
+        }
+        catch (error) { }
+        updateCagnottes(data.room, returnCagnotteOfRoom(data.room));
+    });
     socket.on("modifyPlayerPts", function (data) {
         var playerIndex = clients.findIndex(function (e) { return e.id == data.playerId; });
         if (clients[playerIndex]) {
