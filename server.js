@@ -55,21 +55,19 @@ io.on("connection", function (socket) {
     socket.on("disconnect", function (data) {
         console.log("🔴 user disconnect");
         var clientOnClients = getClientByID(socket.client.id);
+        //*remove players from clients
         if (clientOnClients) {
             clients.splice(clients.indexOf(clientOnClients), 1);
             updatePlayers(clientOnClients.room);
         }
+        //*remove cagnottes where no players in room
         cagnottes.forEach(function (cagnotte) {
-            console.log(clients.some(function (client) {
-                return client.room == cagnotte.room;
-            }));
             if (!clients.some(function (client) {
                 return client.room == cagnotte.room;
             })) {
                 cagnottes.splice(cagnottes.indexOf(cagnotte), 1);
             }
         });
-        console.log(cagnottes);
     });
     socket.on("joinRoom", function (data) {
         socket.join(data.room);
@@ -109,9 +107,12 @@ io.on("connection", function (socket) {
         updateCagnottes(data.room, returnCagnotteOfRoom(data.room));
     });
     socket.on("modifyCagnottes", function (data) {
-        data.isCagnottesTraitor
-            ? (returnCagnotteOfRoom(data.room).traitorValue += data.value)
-            : (returnCagnotteOfRoom(data.room).innocentValue += data.value);
+        try {
+            data.isCagnottesTraitor
+                ? (returnCagnotteOfRoom(data.room).traitorValue += data.value)
+                : (returnCagnotteOfRoom(data.room).innocentValue += data.value);
+        }
+        catch (error) { }
         updateCagnottes(data.room, returnCagnotteOfRoom(data.room));
     });
 });

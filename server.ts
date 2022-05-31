@@ -74,16 +74,13 @@ io.on("connection", (socket) => {
   socket.on("disconnect", (data) => {
     console.log("🔴 user disconnect");
     const clientOnClients: Player = getClientByID(socket.client.id);
+    //*remove players from clients
     if (clientOnClients) {
       clients.splice(clients.indexOf(clientOnClients), 1);
       updatePlayers(clientOnClients.room);
     }
+    //*remove cagnottes where no players in room
     cagnottes.forEach((cagnotte: Cagnotte) => {
-      console.log(
-        clients.some((client) => {
-          return client.room == cagnotte.room;
-        })
-      );
       if (
         !clients.some((client) => {
           return client.room == cagnotte.room;
@@ -92,7 +89,6 @@ io.on("connection", (socket) => {
         cagnottes.splice(cagnottes.indexOf(cagnotte), 1);
       }
     });
-    console.log(cagnottes);
   });
   socket.on(
     "joinRoom",
@@ -136,9 +132,11 @@ io.on("connection", (socket) => {
     }
   );
   socket.on("modifyCagnottes", (data) => {
-    data.isCagnottesTraitor
-      ? (returnCagnotteOfRoom(data.room).traitorValue += data.value)
-      : (returnCagnotteOfRoom(data.room).innocentValue += data.value);
+    try {
+      data.isCagnottesTraitor
+        ? (returnCagnotteOfRoom(data.room).traitorValue += data.value)
+        : (returnCagnotteOfRoom(data.room).innocentValue += data.value);
+    } catch (error) {}
 
     updateCagnottes(data.room, returnCagnotteOfRoom(data.room));
   });
