@@ -58,10 +58,13 @@ function getTheRoom(dataRoom: string): Room {
   return rooms.find((e) => e.name == dataRoom);
 }
 function getRealPlayers(dataRoom: string): Player[] {
-  return getTheRoom(dataRoom).players.filter(
-    (player: Player) =>
-      player.name != controllerName && player.name != viewerName
-  );
+  const room: Room = getTheRoom(dataRoom);
+  if (room) {
+    return room.players.filter(
+      (player: Player) =>
+        player.name != controllerName && player.name != viewerName
+    );
+  }
 }
 io.on("connection", (socket) => {
   const socketClientId = socket.client.id;
@@ -291,6 +294,9 @@ io.on("connection", (socket) => {
         );
         room.votes[voteindex].to = to;
       }
+      io.to(data.room).emit("voteResponse", {
+        votes: room.votes,
+      });
     }
   );
 });

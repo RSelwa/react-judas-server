@@ -31,9 +31,12 @@ function getTheRoom(dataRoom) {
     return rooms.find(function (e) { return e.name == dataRoom; });
 }
 function getRealPlayers(dataRoom) {
-    return getTheRoom(dataRoom).players.filter(function (player) {
-        return player.name != controllerName && player.name != viewerName;
-    });
+    var room = getTheRoom(dataRoom);
+    if (room) {
+        return room.players.filter(function (player) {
+            return player.name != controllerName && player.name != viewerName;
+        });
+    }
 }
 io.on("connection", function (socket) {
     var socketClientId = socket.client.id;
@@ -226,6 +229,9 @@ io.on("connection", function (socket) {
             var voteindex = room.votes.findIndex(function (vote) { return vote.from == from; });
             room.votes[voteindex].to = to;
         }
+        io.to(data.room).emit("voteResponse", {
+            votes: room.votes
+        });
     });
 });
 var PORT = process.env.port || 6602;
