@@ -50,6 +50,12 @@ function getClientByID(clientId: string) {
 function getTheRoom(dataRoom: string): Room {
   return rooms.find((e) => e.name == dataRoom);
 }
+function getRealPlayers(dataRoom: string): Player[] {
+  return getTheRoom(dataRoom).players.filter(
+    (player: Player) =>
+      player.name != controllerName && player.name != viewerName
+  );
+}
 io.on("connection", (socket) => {
   const socketClientId = socket.client.id;
   console.log("🟢 new connection", socketClientId);
@@ -59,7 +65,6 @@ io.on("connection", (socket) => {
   }
   function updatePlayers(room: string): void {
     //* function that send all players except controller and viewer
-    console.log("e");
     io.to(room).emit("updatePlayerResponse", {
       players: getTheRoom(room).players.filter(
         (player: Player) =>
@@ -103,7 +108,9 @@ io.on("connection", (socket) => {
       }
       //*remove players from clients
       clients.splice(clients.indexOf(clientOnClients), 1);
-      updatePlayers(clientOnClients.room);
+      if (roomOfPlayer.players.length > 0) {
+        updatePlayers(clientOnClients.room);
+      }
     }
   });
   socket.on(
@@ -196,20 +203,24 @@ io.on("connection", (socket) => {
       updatePlayers(data.room);
     }
   );
-  socket.on("launchGame", (data: { room: string }) => {
-    console.log(clients);
-    io.to(data.room).emit("statusGameResponse", {});
-  });
   socket.on("selectTraitor", (data: { room: string }) => {
-    io.to(data.room).emit("selecttraitorResponse", {
-      inGame: true,
-    });
+    const room: Room = getTheRoom(data.room);
+    const realPlayers: Player[] = getRealPlayers(data.room);
+    const randomTraitor: Player =
+      realPlayers[Math.floor(Math.random() * realPlayers.length)];
+    console.log(randomTraitor);
+    room.traitorId = randomTraitor.idClient;
+    room.players.find((player) => player == randomTraitor).isTraitor = true;
+    // io.to(data.room).emit("selecttraitorResponse", {
+    //   traitorId: room.traitorId,
+    // });
+    updatePlayers(data.room);
   });
-  socket.on("stopGame", (data: { room: string }) => {
-    console.log("stop game");
+  socket.on("toggleGameStatus", (data: { room: string; inGame: boolean }) => {
     io.to(data.room).emit("statusGameResponse", {
-      inGame: false,
+      inGame: !data.inGame,
     });
+    console.log(!data.inGame ? "🟩 now in game" : "🟥 no game");
   });
 });
 
