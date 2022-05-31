@@ -87,9 +87,7 @@ io.on("connection", (socket) => {
     //* if clients exists in clients
     if (clientOnClients) {
       //* find the room of the player
-      const roomOfPlayer: Room = rooms.find(
-        (room: Room) => room.name == clientOnClients.room
-      );
+      const roomOfPlayer: Room = getTheRoom(clientOnClients.room);
       //* trouve le joueur dans room.player qui correspond à l'clientOnClients (qui est notre joueur deconnecté by id), puis le supprime de room.players
       roomOfPlayer.players.splice(
         roomOfPlayer.players.indexOf(
@@ -99,6 +97,11 @@ io.on("connection", (socket) => {
         ),
         1
       );
+      const playerWasTraitor: boolean =
+        roomOfPlayer.traitorId == clientOnClients.idClient;
+      if (playerWasTraitor) {
+        roomOfPlayer.traitorId = "";
+      }
       //* s'il n'y a plus de joueurs dans la room, supprime la room, faire gaffe aux viewer qui sont pas players?
       if (roomOfPlayer.players.length <= 0) {
         const roomInRooms: Room = rooms.find(
