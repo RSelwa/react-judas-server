@@ -71,7 +71,7 @@ io.on("connection", (socket) => {
 
   socket.on("test", (data: any) => {});
 
-  socket.on("disconnect", (data) => {
+  socket.on("disconnect", (data: any) => {
     console.log("🔴 user disconnect");
     const clientOnClients: Player = getClientByID(socket.client.id);
     //*remove players from clients
@@ -131,15 +131,32 @@ io.on("connection", (socket) => {
       updateCagnottes(data.room, returnCagnotteOfRoom(data.room));
     }
   );
-  socket.on("modifyCagnottes", (data) => {
-    try {
-      data.isCagnottesTraitor
-        ? (returnCagnotteOfRoom(data.room).traitorValue += data.value)
-        : (returnCagnotteOfRoom(data.room).innocentValue += data.value);
-    } catch (error) {}
+  socket.on(
+    "modifyCagnottes",
+    (data: { room: string; value: number; isCagnottesTraitor: boolean }) => {
+      try {
+        data.isCagnottesTraitor
+          ? (returnCagnotteOfRoom(data.room).traitorValue += data.value)
+          : (returnCagnotteOfRoom(data.room).innocentValue += data.value);
+      } catch (error) {}
 
-    updateCagnottes(data.room, returnCagnotteOfRoom(data.room));
-  });
+      updateCagnottes(data.room, returnCagnotteOfRoom(data.room));
+    }
+  );
+  socket.on(
+    "modifyPlayerPts",
+    (data: { room: string; playerId: string; newValue: number }) => {
+      const playerIndex = clients.findIndex((e) => e.id == data.playerId);
+      if (clients[playerIndex]) {
+        if (clients[playerIndex].pts == 0 && data.newValue == -1) {
+          clients[playerIndex].pts = clients[playerIndex].pts;
+        } else {
+          clients[playerIndex].pts = clients[playerIndex].pts + data.newValue;
+        }
+      }
+      updatePlayers(data.room);
+    }
+  );
 });
 
 const PORT = process.env.port || 6602;

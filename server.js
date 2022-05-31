@@ -115,6 +115,18 @@ io.on("connection", function (socket) {
         catch (error) { }
         updateCagnottes(data.room, returnCagnotteOfRoom(data.room));
     });
+    socket.on("modifyPlayerPts", function (data) {
+        var playerIndex = clients.findIndex(function (e) { return e.id == data.playerId; });
+        if (clients[playerIndex]) {
+            if (clients[playerIndex].pts == 0 && data.newValue == -1) {
+                clients[playerIndex].pts = clients[playerIndex].pts;
+            }
+            else {
+                clients[playerIndex].pts = clients[playerIndex].pts + data.newValue;
+            }
+        }
+        updatePlayers(data.room);
+    });
 });
 var PORT = process.env.port || 6602;
 httpServer.listen(PORT, function () {
