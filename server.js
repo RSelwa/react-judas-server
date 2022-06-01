@@ -314,7 +314,8 @@ io.on("connection", function (socket) {
         var votesTo = votes.map(function (vote) { return vote.to; });
         var mostVotedPlayer = getMostVotedPlayer(data.room);
         io.to(data.room).emit("demandVotesResultResponse", {
-            mostVotedPlayer: mostVotedPlayer
+            mostVotedPlayer: mostVotedPlayer,
+            displayVotesResult: true
         });
     });
 });

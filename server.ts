@@ -387,6 +387,7 @@ io.on("connection", (socket) => {
     const mostVotedPlayer: Player = getMostVotedPlayer(data.room);
     io.to(data.room).emit("demandVotesResultResponse", {
       mostVotedPlayer: mostVotedPlayer,
+      displayVotesResult: true,
     });
   });
 });
