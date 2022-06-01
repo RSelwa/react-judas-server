@@ -23,6 +23,8 @@ type Player = {
   pts: number;
   isTraitor: boolean;
   ptsCagnotte: number;
+  hasVoted: boolean;
+  voteConfirmed: boolean;
 };
 type Cagnotte = {
   room: string;
@@ -88,10 +90,17 @@ io.on("connection", (socket) => {
       // players: getAllClientsWithSameRoom(dataRoom),
     });
   }
+  function updatesVotes(dataRoom: string): void {
+    const room: Room = getTheRoom(dataRoom);
+
+    io.to(dataRoom).emit("voteResponse", {
+      votes: room.votes,
+    });
+  }
 
   socket.on("test", (data: { room: string }) => {
     const room = getTheRoom(data.room);
-    console.log(getRealPlayers(data.room));
+    console.log(room.votes);
     // console.log(room);
     // io.to(data.room).emit("testResponse", {});
   });
@@ -143,6 +152,8 @@ io.on("connection", (socket) => {
         pts: 0,
         isTraitor: false,
         ptsCagnotte: 0,
+        hasVoted: false,
+        voteConfirmed: false,
       };
       socket.emit("joinRoomResponse", {
         room: data.room,
@@ -236,7 +247,6 @@ io.on("connection", (socket) => {
     }
   });
   //# stop game
-
   socket.on("resetTraitor", (data: { room: string }) => {
     const room: Room = getTheRoom(data.room);
     const playerTraitor: Player = room.players.find(
@@ -278,27 +288,45 @@ io.on("connection", (socket) => {
     (data: { room: string; playerVotedFor: Player; clientId: string }) => {
       console.log("📩 vote received");
       const room: Room = getTheRoom(data.room);
-      const from: Player = getRealPlayers(data.room).find(
-        (player: Player) => player.idClient == data.clientId
-      );
-      const to: Player = data.playerVotedFor;
-      const voteAlreadyExist: Vote = room.votes.find(
-        (vote: Vote) => vote.from == from
-      );
-      if (!voteAlreadyExist) {
-        console.log("doesn exist");
-        room.votes.push({ from: from, to: to, confirm: false });
-      } else {
-        const voteindex: number = room.votes.findIndex(
+      const realPlayers: Player[] = getRealPlayers(data.room);
+      if (realPlayers) {
+        const from: Player = realPlayers.find(
+          (player: Player) => player.idClient == data.clientId
+        );
+        const to: Player = data.playerVotedFor;
+        const voteAlreadyExist: Vote = room.votes.find(
           (vote: Vote) => vote.from == from
         );
-        room.votes[voteindex].to = to;
+        if (!voteAlreadyExist) {
+          console.log("doesn exist");
+          room.votes.push({ from: from, to: to, confirm: false });
+        } else {
+          const voteindex: number = room.votes.findIndex(
+            (vote: Vote) => vote.from == from
+          );
+          room.votes[voteindex].to = to;
+        }
+        from.hasVoted = true;
+        updatesVotes(data.room);
+        socket.emit("hasVotedResponse", {
+          hasVoted: from.hasVoted,
+        });
       }
-      io.to(data.room).emit("voteResponse", {
-        votes: room.votes,
-      });
     }
   );
+  socket.on("confirmVote", (data: { room: string; clientId: string }) => {
+    const room = getTheRoom(data.room);
+    const voteToConfirm: Vote = room.votes.find(
+      (vote: Vote) => vote.from.idClient == data.clientId
+    );
+    if (voteToConfirm) {
+      voteToConfirm.confirm = true;
+      updatesVotes(data.room);
+      socket.emit("hasVoteConfirmedResponse", {
+        hasConfirmedVote: voteToConfirm.confirm,
+      });
+    }
+  });
 });
 
 const PORT = process.env.port || 6602;

@@ -58,9 +58,15 @@ io.on("connection", function (socket) {
             cagnotte: cagnotte
         });
     }
+    function updatesVotes(dataRoom) {
+        var room = getTheRoom(dataRoom);
+        io.to(dataRoom).emit("voteResponse", {
+            votes: room.votes
+        });
+    }
     socket.on("test", function (data) {
         var room = getTheRoom(data.room);
-        console.log(getRealPlayers(data.room));
+        console.log(room.votes);
         // console.log(room);
         // io.to(data.room).emit("testResponse", {});
     });
@@ -98,7 +104,9 @@ io.on("connection", function (socket) {
             name: data.name,
             pts: 0,
             isTraitor: false,
-            ptsCagnotte: 0
+            ptsCagnotte: 0,
+            hasVoted: false,
+            voteConfirmed: false
         };
         socket.emit("joinRoomResponse", {
             room: data.room,
@@ -218,20 +226,36 @@ io.on("connection", function (socket) {
     socket.on("vote", function (data) {
         console.log("📩 vote received");
         var room = getTheRoom(data.room);
-        var from = getRealPlayers(data.room).find(function (player) { return player.idClient == data.clientId; });
-        var to = data.playerVotedFor;
-        var voteAlreadyExist = room.votes.find(function (vote) { return vote.from == from; });
-        if (!voteAlreadyExist) {
-            console.log("doesn exist");
-            room.votes.push({ from: from, to: to, confirm: false });
+        var realPlayers = getRealPlayers(data.room);
+        if (realPlayers) {
+            var from_1 = realPlayers.find(function (player) { return player.idClient == data.clientId; });
+            var to = data.playerVotedFor;
+            var voteAlreadyExist = room.votes.find(function (vote) { return vote.from == from_1; });
+            if (!voteAlreadyExist) {
+                console.log("doesn exist");
+                room.votes.push({ from: from_1, to: to, confirm: false });
+            }
+            else {
+                var voteindex = room.votes.findIndex(function (vote) { return vote.from == from_1; });
+                room.votes[voteindex].to = to;
+            }
+            from_1.hasVoted = true;
+            updatesVotes(data.room);
+            socket.emit("hasVotedResponse", {
+                hasVoted: from_1.hasVoted
+            });
         }
-        else {
-            var voteindex = room.votes.findIndex(function (vote) { return vote.from == from; });
-            room.votes[voteindex].to = to;
+    });
+    socket.on("confirmVote", function (data) {
+        var room = getTheRoom(data.room);
+        var voteToConfirm = room.votes.find(function (vote) { return vote.from.idClient == data.clientId; });
+        if (voteToConfirm) {
+            voteToConfirm.confirm = true;
+            updatesVotes(data.room);
+            socket.emit("hasVoteConfirmedResponse", {
+                hasConfirmedVote: voteToConfirm.confirm
+            });
         }
-        io.to(data.room).emit("voteResponse", {
-            votes: room.votes
-        });
     });
 });
 var PORT = process.env.port || 6602;
