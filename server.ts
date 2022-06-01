@@ -223,6 +223,11 @@ io.on("connection", (socket) => {
       // updateCagnottes(data.room, getTheRoom(data.room).cagnotte);
     }
   );
+  socket.on("revealRole", (data: { viewerRevealRole: boolean }) => {
+    socket.emit("revealRoleResponse", {
+      viewerRevealRole: !data.viewerRevealRole,
+    });
+  });
   socket.on(
     "modifyCagnottes",
     (data: { room: string; value: number; isCagnottesTraitor: boolean }) => {

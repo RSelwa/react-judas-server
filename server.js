@@ -174,6 +174,11 @@ io.on("connection", function (socket) {
         // updatePlayers(data.room);
         // updateCagnottes(data.room, getTheRoom(data.room).cagnotte);
     });
+    socket.on("revealRole", function (data) {
+        socket.emit("revealRoleResponse", {
+            viewerRevealRole: !data.viewerRevealRole
+        });
+    });
     socket.on("modifyCagnottes", function (data) {
         var room = getTheRoom(data.room);
         console.log(room.cagnotte);
