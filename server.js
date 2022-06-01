@@ -24,7 +24,8 @@ var rooms = [];
 // let votesRoom = [];
 function getClientByID(clientId) {
     //* get the id of the client in all the clients
-    return clients.find(function (client) { return client.id == clientId; });
+    var client = clients.find(function (client) { return client.id == clientId; });
+    return client;
     //   return clientId;
 }
 function getTheRoom(dataRoom) {
@@ -73,6 +74,7 @@ io.on("connection", function (socket) {
     socket.on("disconnect", function (data) {
         console.log("🔴 user disconnect");
         var clientOnClients = getClientByID(socketClientId);
+        console.log("data", data);
         //* if clients exists in clients
         if (clientOnClients) {
             //* find the room of the player
@@ -127,7 +129,7 @@ io.on("connection", function (socket) {
                 socket.emit("joinPlayerResponse", {});
                 break;
         }
-        clients.push(newPlayer);
+        // clients.push(newPlayer);
         //# initiate the room if doesn't exist yet
         if (rooms.find(function (e) { return e.name == data.room; }) == undefined) {
             rooms.push({
@@ -219,8 +221,19 @@ io.on("connection", function (socket) {
         console.log("❌ votes stop");
         var room = getTheRoom(data.room);
         room.votesLaunched = false;
-        io.to(data.room).emit("launchVoteResponse", {
+        room.votes = [];
+        updatesVotes(data.room);
+        room.players.forEach(function (player) {
+            player.hasVoted = false;
+            player.voteConfirmed = false;
+        });
+        updatePlayers(data.room);
+        io.to(data.room).emit("stopVoteResponse", {
             votesLaunched: room.votesLaunched
+        });
+        io.to(data.room).emit("reinitiateVoteResposne", {
+            hasVoted: false,
+            voteConfirmed: false
         });
     });
     socket.on("vote", function (data) {

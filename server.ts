@@ -51,9 +51,10 @@ let clients: Player[] = [];
 let rooms: Room[] = [];
 // let cagnottes: Cagnotte[] = [];
 // let votesRoom = [];
-function getClientByID(clientId: string) {
+function getClientByID(clientId: string): Player {
   //* get the id of the client in all the clients
-  return clients.find((client) => client.id == clientId);
+  const client: Player = clients.find((client) => client.id == clientId);
+  return client;
   //   return clientId;
 }
 function getTheRoom(dataRoom: string): Room {
@@ -108,6 +109,7 @@ io.on("connection", (socket) => {
   socket.on("disconnect", (data: any) => {
     console.log("🔴 user disconnect");
     const clientOnClients: Player = getClientByID(socketClientId);
+    console.log("data", data);
     //* if clients exists in clients
     if (clientOnClients) {
       //* find the room of the player
@@ -175,7 +177,7 @@ io.on("connection", (socket) => {
           socket.emit("joinPlayerResponse", {});
           break;
       }
-      clients.push(newPlayer);
+      // clients.push(newPlayer);
       //# initiate the room if doesn't exist yet
       if (rooms.find((e) => e.name == data.room) == undefined) {
         rooms.push({
@@ -279,8 +281,19 @@ io.on("connection", (socket) => {
     console.log("❌ votes stop");
     const room: Room = getTheRoom(data.room);
     room.votesLaunched = false;
-    io.to(data.room).emit("launchVoteResponse", {
+    room.votes = [];
+    updatesVotes(data.room);
+    room.players.forEach((player: Player) => {
+      player.hasVoted = false;
+      player.voteConfirmed = false;
+    });
+    updatePlayers(data.room);
+    io.to(data.room).emit("stopVoteResponse", {
       votesLaunched: room.votesLaunched,
+    });
+    io.to(data.room).emit("reinitiateVoteResposne", {
+      hasVoted: false,
+      voteConfirmed: false,
     });
   });
   socket.on(
