@@ -40,7 +40,7 @@ function getRealPlayers(dataRoom) {
     }
 }
 function getMostVotedPlayer(dataRoom) {
-    //# si c'est 1 partout faire en sorte que le traitre ne soit pas designé comme le mostVoted, ici c'est le dernier player
+    //# si c'est 1 partout faire en sorte que le traitre ne soit pas designé comme le mostVoted, ici c'est le dernier player qui a été voté soit le last dans room.votes
     var room = getTheRoom(dataRoom);
     var players = getRealPlayers(dataRoom);
     var votes = room.votes;
@@ -48,6 +48,7 @@ function getMostVotedPlayer(dataRoom) {
     var counts = {}; //We are going to count occurrence of item here
     var compare = 0; //We are going to compare using stored value
     var mostFrequent; //We are going to store most frequent item
+    var mostFrequentNotTraitor; //We are going to store most frequent item
     for (var i = 0, len = votesTo.length; i < len; i++) {
         var player = votesTo[i]; //
         if (counts[player] === undefined) {
@@ -62,8 +63,15 @@ function getMostVotedPlayer(dataRoom) {
             //counts[word] > 0(first time)
             compare = counts[player]; //set compare to counts[word]
             mostFrequent = votesTo[i]; //set mostFrequent value
+            if (votesTo[i].isTraitor == false)
+                mostFrequentNotTraitor = votesTo[i];
         }
+        console.log(counts, i);
     }
+    console.log(counts, "counts");
+    console.log(compare, "compare");
+    console.log(mostFrequent, "t");
+    console.log(mostFrequentNotTraitor, "not t");
     return mostFrequent;
 }
 io.on("connection", function (socket) {
@@ -72,6 +80,7 @@ io.on("connection", function (socket) {
     function updateRoom(room) {
         updatePlayers(room);
         updateCagnottes(room, getTheRoom(room).cagnotte);
+        updatesInRoom(room);
     }
     function updatePlayers(room) {
         //* function that send all players except controller and viewer
@@ -90,6 +99,12 @@ io.on("connection", function (socket) {
         var room = getTheRoom(dataRoom);
         io.to(dataRoom).emit("voteResponse", {
             votes: room.votes
+        });
+    }
+    function updatesInRoom(dataRoom) {
+        var room = getTheRoom(dataRoom);
+        socket.emit("statusGameResponse", {
+            inGame: room.inGame
         });
     }
     socket.on("test", function (data) {
@@ -318,9 +333,13 @@ io.on("connection", function (socket) {
         var votes = room.votes;
         var votesTo = votes.map(function (vote) { return vote.to; });
         var mostVotedPlayer = getMostVotedPlayer(data.room);
+        var numberSubWinner = mostVotedPlayer.isTraitor
+            ? room.cagnotte.innocentValue
+            : room.cagnotte.traitorValue;
         io.to(data.room).emit("demandVotesResultResponse", {
             mostVotedPlayer: mostVotedPlayer,
-            displayVotesResult: true
+            displayVotesResult: true,
+            numberSubWinner: numberSubWinner
         });
     });
 });

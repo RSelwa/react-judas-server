@@ -70,7 +70,7 @@ function getRealPlayers(dataRoom: string): Player[] {
   }
 }
 function getMostVotedPlayer(dataRoom: string): Player {
-  //# si c'est 1 partout faire en sorte que le traitre ne soit pas designé comme le mostVoted, ici c'est le dernier player
+  //# si c'est 1 partout faire en sorte que le traitre ne soit pas designé comme le mostVoted, ici c'est le dernier player qui a été voté soit le last dans room.votes
   const room = getTheRoom(dataRoom);
   const players: Player[] = getRealPlayers(dataRoom);
   const votes: Vote[] = room.votes;
@@ -78,6 +78,7 @@ function getMostVotedPlayer(dataRoom: string): Player {
   var counts = {}; //We are going to count occurrence of item here
   var compare: number = 0; //We are going to compare using stored value
   var mostFrequent: Player; //We are going to store most frequent item
+  var mostFrequentNotTraitor: Player; //We are going to store most frequent item
   for (var i = 0, len = votesTo.length; i < len; i++) {
     let player: any = votesTo[i]; //
 
@@ -92,8 +93,14 @@ function getMostVotedPlayer(dataRoom: string): Player {
       //counts[word] > 0(first time)
       compare = counts[player]; //set compare to counts[word]
       mostFrequent = votesTo[i]; //set mostFrequent value
+      if (votesTo[i].isTraitor == false) mostFrequentNotTraitor = votesTo[i];
     }
+    console.log(counts, i);
   }
+  console.log(counts, "counts");
+  console.log(compare, "compare");
+  console.log(mostFrequent, "t");
+  console.log(mostFrequentNotTraitor, "not t");
   return mostFrequent;
 }
 io.on("connection", (socket) => {
@@ -102,6 +109,7 @@ io.on("connection", (socket) => {
   function updateRoom(room: string) {
     updatePlayers(room);
     updateCagnottes(room, getTheRoom(room).cagnotte);
+    updatesInRoom(room);
   }
   function updatePlayers(room: string): void {
     //* function that send all players except controller and viewer
@@ -123,6 +131,12 @@ io.on("connection", (socket) => {
 
     io.to(dataRoom).emit("voteResponse", {
       votes: room.votes,
+    });
+  }
+  function updatesInRoom(dataRoom: string): void {
+    const room: Room = getTheRoom(dataRoom);
+    socket.emit("statusGameResponse", {
+      inGame: room.inGame,
     });
   }
 
@@ -390,9 +404,13 @@ io.on("connection", (socket) => {
     const votes: Vote[] = room.votes;
     const votesTo: Player[] = votes.map((vote: Vote) => vote.to);
     const mostVotedPlayer: Player = getMostVotedPlayer(data.room);
+    const numberSubWinner: number = mostVotedPlayer.isTraitor
+      ? room.cagnotte.innocentValue
+      : room.cagnotte.traitorValue;
     io.to(data.room).emit("demandVotesResultResponse", {
       mostVotedPlayer: mostVotedPlayer,
       displayVotesResult: true,
+      numberSubWinner: numberSubWinner,
     });
   });
 });
