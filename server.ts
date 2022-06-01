@@ -69,6 +69,33 @@ function getRealPlayers(dataRoom: string): Player[] {
     );
   }
 }
+function getMostVotedPlayer(dataRoom: string): Player {
+  //# si c'est 1 partout faire en sorte que le traitre ne soit pas designé comme le mostVoted, ici c'est le dernier player
+  const room = getTheRoom(dataRoom);
+  const players: Player[] = getRealPlayers(dataRoom);
+  const votes: Vote[] = room.votes;
+  const votesTo: Player[] = votes.map((vote: Vote) => vote.to);
+  var counts = {}; //We are going to count occurrence of item here
+  var compare: number = 0; //We are going to compare using stored value
+  var mostFrequent: Player; //We are going to store most frequent item
+  for (var i = 0, len = votesTo.length; i < len; i++) {
+    let player: any = votesTo[i]; //
+
+    if (counts[player] === undefined) {
+      //if count[word] doesn't exist
+      counts[player] = 1; //set count[word] value to 1
+    } else {
+      //if exists
+      counts[player] = counts[player] + 1; //increment existing value
+    }
+    if (counts[player] > compare) {
+      //counts[word] > 0(first time)
+      compare = counts[player]; //set compare to counts[word]
+      mostFrequent = votesTo[i]; //set mostFrequent value
+    }
+  }
+  return mostFrequent;
+}
 io.on("connection", (socket) => {
   const socketClientId = socket.client.id;
   console.log("🟢 new connection", socketClientId);
@@ -100,16 +127,12 @@ io.on("connection", (socket) => {
   }
 
   socket.on("test", (data: { room: string }) => {
-    const room = getTheRoom(data.room);
-    console.log(room.votes);
-    // console.log(room);
-    // io.to(data.room).emit("testResponse", {});
+    console.log(getMostVotedPlayer(data.room));
   });
 
   socket.on("disconnect", (data: any) => {
     console.log("🔴 user disconnect");
     const clientOnClients: Player = getClientByID(socketClientId);
-    console.log("data", data);
     //* if clients exists in clients
     if (clientOnClients) {
       //* find the room of the player
@@ -177,7 +200,7 @@ io.on("connection", (socket) => {
           socket.emit("joinPlayerResponse", {});
           break;
       }
-      // clients.push(newPlayer);
+      clients.push(newPlayer);
       //# initiate the room if doesn't exist yet
       if (rooms.find((e) => e.name == data.room) == undefined) {
         rooms.push({
@@ -295,6 +318,9 @@ io.on("connection", (socket) => {
       hasVoted: false,
       voteConfirmed: false,
     });
+    io.to(data.room).emit("everyOneHaseveryOneHasConfirmedVoteResponse", {
+      everyOneHasConfirmedVote: false,
+    });
   });
   socket.on(
     "vote",
@@ -339,6 +365,29 @@ io.on("connection", (socket) => {
         hasConfirmedVote: voteToConfirm.confirm,
       });
     }
+  });
+  socket.on("everyoneConfirmDemand", (data: { room: string }) => {
+    const room: Room = getTheRoom(data.room);
+    const players: Player[] = getRealPlayers(data.room);
+    const votes: Vote[] = room.votes;
+    // let everyOneHasVoted:boolean
+    if (votes.length == players.length) {
+      const everyOneHasConfirmedVote: boolean = votes.every(
+        (vote: Vote) => vote.confirm === true
+      );
+      io.to(data.room).emit("everyOneHaseveryOneHasConfirmedVoteResponse", {
+        everyOneHasConfirmedVote: everyOneHasConfirmedVote,
+      });
+    }
+  });
+  socket.on("demandVotesResult", (data: { room: string }) => {
+    const room: Room = getTheRoom(data.room);
+    const votes: Vote[] = room.votes;
+    const votesTo: Player[] = votes.map((vote: Vote) => vote.to);
+    const mostVotedPlayer: Player = getMostVotedPlayer(data.room);
+    io.to(data.room).emit("demandVotesResultResponse", {
+      mostVotedPlayer: mostVotedPlayer,
+    });
   });
 });
 

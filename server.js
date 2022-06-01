@@ -39,6 +39,33 @@ function getRealPlayers(dataRoom) {
         });
     }
 }
+function getMostVotedPlayer(dataRoom) {
+    //# si c'est 1 partout faire en sorte que le traitre ne soit pas designé comme le mostVoted, ici c'est le dernier player
+    var room = getTheRoom(dataRoom);
+    var players = getRealPlayers(dataRoom);
+    var votes = room.votes;
+    var votesTo = votes.map(function (vote) { return vote.to; });
+    var counts = {}; //We are going to count occurrence of item here
+    var compare = 0; //We are going to compare using stored value
+    var mostFrequent; //We are going to store most frequent item
+    for (var i = 0, len = votesTo.length; i < len; i++) {
+        var player = votesTo[i]; //
+        if (counts[player] === undefined) {
+            //if count[word] doesn't exist
+            counts[player] = 1; //set count[word] value to 1
+        }
+        else {
+            //if exists
+            counts[player] = counts[player] + 1; //increment existing value
+        }
+        if (counts[player] > compare) {
+            //counts[word] > 0(first time)
+            compare = counts[player]; //set compare to counts[word]
+            mostFrequent = votesTo[i]; //set mostFrequent value
+        }
+    }
+    return mostFrequent;
+}
 io.on("connection", function (socket) {
     var socketClientId = socket.client.id;
     console.log("🟢 new connection", socketClientId);
@@ -66,15 +93,11 @@ io.on("connection", function (socket) {
         });
     }
     socket.on("test", function (data) {
-        var room = getTheRoom(data.room);
-        console.log(room.votes);
-        // console.log(room);
-        // io.to(data.room).emit("testResponse", {});
+        console.log(getMostVotedPlayer(data.room));
     });
     socket.on("disconnect", function (data) {
         console.log("🔴 user disconnect");
         var clientOnClients = getClientByID(socketClientId);
-        console.log("data", data);
         //* if clients exists in clients
         if (clientOnClients) {
             //* find the room of the player
@@ -129,7 +152,7 @@ io.on("connection", function (socket) {
                 socket.emit("joinPlayerResponse", {});
                 break;
         }
-        // clients.push(newPlayer);
+        clients.push(newPlayer);
         //# initiate the room if doesn't exist yet
         if (rooms.find(function (e) { return e.name == data.room; }) == undefined) {
             rooms.push({
@@ -235,6 +258,9 @@ io.on("connection", function (socket) {
             hasVoted: false,
             voteConfirmed: false
         });
+        io.to(data.room).emit("everyOneHaseveryOneHasConfirmedVoteResponse", {
+            everyOneHasConfirmedVote: false
+        });
     });
     socket.on("vote", function (data) {
         console.log("📩 vote received");
@@ -269,6 +295,27 @@ io.on("connection", function (socket) {
                 hasConfirmedVote: voteToConfirm.confirm
             });
         }
+    });
+    socket.on("everyoneConfirmDemand", function (data) {
+        var room = getTheRoom(data.room);
+        var players = getRealPlayers(data.room);
+        var votes = room.votes;
+        // let everyOneHasVoted:boolean
+        if (votes.length == players.length) {
+            var everyOneHasConfirmedVote = votes.every(function (vote) { return vote.confirm === true; });
+            io.to(data.room).emit("everyOneHaseveryOneHasConfirmedVoteResponse", {
+                everyOneHasConfirmedVote: everyOneHasConfirmedVote
+            });
+        }
+    });
+    socket.on("demandVotesResult", function (data) {
+        var room = getTheRoom(data.room);
+        var votes = room.votes;
+        var votesTo = votes.map(function (vote) { return vote.to; });
+        var mostVotedPlayer = getMostVotedPlayer(data.room);
+        io.to(data.room).emit("demandVotesResultResponse", {
+            mostVotedPlayer: mostVotedPlayer
+        });
     });
 });
 var PORT = process.env.port || 6602;
