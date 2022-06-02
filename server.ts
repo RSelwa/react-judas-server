@@ -4,6 +4,8 @@ const options = {
     origin: [
       "http://judas.r-selwa.space",
       "https://judas.r-selwa.space",
+      "http://react-judas.r-selwa.space",
+      "https://react-judas.r-selwa.space",
       "http://localhost:8080",
       "http://192.168.1.23:8080",
       "http://localhost:3000",
