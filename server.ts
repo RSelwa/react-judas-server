@@ -44,6 +44,7 @@ type Room = {
   cagnotte: Cagnotte;
   votes: Vote[];
   votesLaunched: boolean;
+  questionsLaunched: boolean;
   traitorId: string;
 };
 type Vote = {
@@ -147,6 +148,7 @@ io.on("connection", (socket) => {
 
   socket.on("test", (data: { room: string }) => {
     console.log(getMostVotedPlayer(data.room));
+    io.to(data.room).emit("globalCagnoteAnimation", {});
   });
 
   socket.on("disconnect", (data: any) => {
@@ -233,6 +235,7 @@ io.on("connection", (socket) => {
           },
           votes: [],
           votesLaunched: false,
+          questionsLaunched: false,
           traitorId: "",
         });
       }
@@ -251,11 +254,13 @@ io.on("connection", (socket) => {
     "modifyCagnottes",
     (data: { room: string; value: number; isCagnottesTraitor: boolean }) => {
       const room: Room = getTheRoom(data.room);
-      console.log(room.cagnotte);
       data.isCagnottesTraitor
         ? (room.cagnotte.traitorValue += data.value)
         : (room.cagnotte.innocentValue += data.value);
       updateCagnottes(data.room, room.cagnotte);
+      io.to(data.room).emit("globalCagnoteAnimation", {
+        animationForInnocent: !data.isCagnottesTraitor,
+      });
     }
   );
   socket.on(
@@ -346,6 +351,41 @@ io.on("connection", (socket) => {
       everyOneHasConfirmedVote: false,
     });
   });
+  socket.on(
+    "toggleLaunchQuestions",
+    (data: { room: string; questionsLaunched: boolean }) => {
+      console.log(data.questionsLaunched);
+      const room: Room = getTheRoom(data.room);
+      room.questionsLaunched = !data.questionsLaunched;
+      io.to(data.room).emit("toggleLaunchQuestionsResponse", {
+        launchedQuestions: room.questionsLaunched,
+      });
+    }
+  );
+  socket.on(
+    "arrowQuestions",
+    (data: {
+      room: string;
+      nextQuestion: boolean;
+      questionsLength: number;
+      numberQuestion: number;
+    }) => {
+      console.log(data.nextQuestion);
+      console.log(data.numberQuestion);
+      console.log(data.questionsLength);
+      let newNumberQuestion: number;
+      data.nextQuestion
+        ? data.numberQuestion + 1 == data.questionsLength
+          ? (newNumberQuestion = data.numberQuestion)
+          : (newNumberQuestion = data.numberQuestion + 1)
+        : data.numberQuestion == 0
+        ? (newNumberQuestion = data.numberQuestion)
+        : (newNumberQuestion = data.numberQuestion - 1);
+      io.to(data.room).emit("arrowQuestionsResponse", {
+        newNumberQuestion: newNumberQuestion,
+      });
+    }
+  );
   socket.on(
     "vote",
     (data: { room: string; playerVotedFor: Player; clientId: string }) => {
