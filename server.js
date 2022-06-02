@@ -9,77 +9,73 @@ var app = express();
 var httpServer = (0, http_1.createServer)();
 var PORT = process.env.port || 6602;
 var io = new socket_io_1.Server(httpServer, {
-  cors: {
-    origin: [
-      "http://judas.r-selwa.space",
-      "https://judas.r-selwa.space",
-      "http://localhost:8080",
-      "http://192.168.1.23:8080",
-      "http://localhost:3000",
-      "http://192.168.1.23:3000",
-    ],
-    methods: ["GET", "POST"],
-  },
+    cors: {
+        origin: [
+            "http://judas.r-selwa.space",
+            "https://judas.r-selwa.space",
+            "http://localhost:8080",
+            "http://192.168.1.23:8080",
+            "http://localhost:3000",
+            "http://192.168.1.23:3000",
+        ],
+        methods: ["GET", "POST"]
+    }
 });
 var controllerName = "c";
 var viewerName = "v";
 var clients = [];
 var rooms = [];
 function getClientByID(clientId) {
-  //* get the id of the client in all the clients
-  var client = clients.find(function (client) {
-    return client.id == clientId;
-  });
-  return client;
-  //   return clientId;
+    //* get the id of the client in all the clients
+    var client = clients.find(function (client) { return client.id == clientId; });
+    return client;
+    //   return clientId;
 }
 function getTheRoom(dataRoom) {
-  return rooms.find(function (e) {
-    return e.name == dataRoom;
-  });
+    return rooms.find(function (e) { return e.name == dataRoom; });
 }
 function getRealPlayers(dataRoom) {
-  var room = getTheRoom(dataRoom);
-  if (room) {
-    return room.players.filter(function (player) {
-      return player.name != controllerName && player.name != viewerName;
-    });
-  }
+    var room = getTheRoom(dataRoom);
+    if (room) {
+        return room.players.filter(function (player) {
+            return player.name != controllerName && player.name != viewerName;
+        });
+    }
 }
 function getMostVotedPlayer(dataRoom) {
-  //# si c'est 1 partout faire en sorte que le traitre ne soit pas designé comme le mostVoted, ici c'est le dernier player qui a été voté soit le last dans room.votes
-  var room = getTheRoom(dataRoom);
-  var players = getRealPlayers(dataRoom);
-  var votes = room.votes;
-  var votesTo = votes.map(function (vote) {
-    return vote.to;
-  });
-  var counts = {}; //We are going to count occurrence of item here
-  var compare = 0; //We are going to compare using stored value
-  var mostFrequent; //We are going to store most frequent item
-  var mostFrequentNotTraitor; //We are going to store most frequent item
-  for (var i = 0, len = votesTo.length; i < len; i++) {
-    var player = votesTo[i]; //
-    if (counts[player] === undefined) {
-      //if count[word] doesn't exist
-      counts[player] = 1; //set count[word] value to 1
-    } else {
-      //if exists
-      counts[player] = counts[player] + 1; //increment existing value
+    //# si c'est 1 partout faire en sorte que le traitre ne soit pas designé comme le mostVoted, ici c'est le dernier player qui a été voté soit le last dans room.votes
+    var room = getTheRoom(dataRoom);
+    var players = getRealPlayers(dataRoom);
+    var votes = room.votes;
+    var votesTo = votes.map(function (vote) { return vote.to; });
+    var counts = {}; //We are going to count occurrence of item here
+    var compare = 0; //We are going to compare using stored value
+    var mostFrequent; //We are going to store most frequent item
+    var mostFrequentNotTraitor; //We are going to store most frequent item
+    for (var i = 0, len = votesTo.length; i < len; i++) {
+        var player = votesTo[i]; //
+        if (counts[player] === undefined) {
+            //if count[word] doesn't exist
+            counts[player] = 1; //set count[word] value to 1
+        }
+        else {
+            //if exists
+            counts[player] = counts[player] + 1; //increment existing value
+        }
+        if (counts[player] > compare) {
+            //counts[word] > 0(first time)
+            compare = counts[player]; //set compare to counts[word]
+            mostFrequent = votesTo[i]; //set mostFrequent value
+            if (votesTo[i].isTraitor == false)
+                mostFrequentNotTraitor = votesTo[i];
+        }
+        console.log(counts, i);
     }
-    if (counts[player] > compare) {
-      //counts[word] > 0(first time)
-      compare = counts[player]; //set compare to counts[word]
-      mostFrequent = votesTo[i]; //set mostFrequent value
-      if (votesTo[i].isTraitor == false) mostFrequentNotTraitor = votesTo[i];
-    }
-    console.log(counts, i);
-  }
-  console.log(counts, "counts");
-  console.log(compare, "compare");
-  console.log(mostFrequent, "t");
-  console.log(mostFrequentNotTraitor, "not t");
-  return mostFrequent;
+    console.log(counts, "counts");
+    console.log(compare, "compare");
+    console.log(mostFrequent, "t");
+    console.log(mostFrequentNotTraitor, "not t");
+    return mostFrequent;
 }
 // io.on("connection", (socket) => {
 //   const socketClientId = socket.client.id;
@@ -392,8 +388,8 @@ function getMostVotedPlayer(dataRoom) {
 //   console.log("🚀 server is listening");
 // });
 app.get("/", function (req, res) {
-  res.send("Hello World!");
+    res.send("Hello World!");
 });
 app.listen(PORT, function () {
-  console.log("Example app listening on port ".concat(PORT));
+    console.log("Example app listening on port ".concat(PORT));
 });
