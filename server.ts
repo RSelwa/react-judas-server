@@ -146,10 +146,7 @@ io.on("connection", (socket) => {
     });
   }
 
-  socket.on("test", (data: { room: string }) => {
-    console.log(getMostVotedPlayer(data.room));
-    io.to(data.room).emit("globalCagnoteAnimation", {});
-  });
+  socket.on("test", (data: { room: string; audio: string }) => {});
 
   socket.on("disconnect", (data: any) => {
     console.log("🔴 user disconnect");
@@ -458,10 +455,13 @@ io.on("connection", (socket) => {
       numberSubWinner: numberSubWinner,
     });
   });
+  socket.on("playAudio", (data: { room: string; audio: string }) => {
+    io.to(data.room).emit("playAudioResponse", {
+      audio: data.audio,
+    });
+  });
 });
 
 httpServer.listen(PORT, () => {
-  console.log(
-    `🚀 server is listening on port ${PORT}, httpServer get socket but no files`
-  );
+  console.log(`🚀 server is listening on port ${PORT}`);
 });

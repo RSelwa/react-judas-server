@@ -109,10 +109,7 @@ io.on("connection", function (socket) {
             inGame: room.inGame
         });
     }
-    socket.on("test", function (data) {
-        console.log(getMostVotedPlayer(data.room));
-        io.to(data.room).emit("globalCagnoteAnimation", {});
-    });
+    socket.on("test", function (data) { });
     socket.on("disconnect", function (data) {
         console.log("🔴 user disconnect");
         var clientOnClients = getClientByID(socketClientId);
@@ -372,7 +369,12 @@ io.on("connection", function (socket) {
             numberSubWinner: numberSubWinner
         });
     });
+    socket.on("playAudio", function (data) {
+        io.to(data.room).emit("playAudioResponse", {
+            audio: data.audio
+        });
+    });
 });
 httpServer.listen(PORT, function () {
-    console.log("\uD83D\uDE80 server is listening on port ".concat(PORT, ", httpServer get socket but no files"));
+    console.log("\uD83D\uDE80 server is listening on port ".concat(PORT));
 });
