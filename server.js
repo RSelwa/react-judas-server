@@ -43,39 +43,25 @@ function getRealPlayers(dataRoom) {
         });
     }
 }
+function countOccurances(arr) {
+    //on a un array d'object avec les string et ou fera un objet avec les valeurs, faut link les valeurs avec les tring
+    var out = {};
+    var arr2 = [];
+    arr.forEach(function (el, i) {
+        out[el] = out[el] ? out[el] + 1 : 1;
+    });
+    return out;
+}
 function getMostVotedPlayer(dataRoom) {
     //# si c'est 1 partout faire en sorte que le traitre ne soit pas designé comme le mostVoted, ici c'est le dernier player qui a été voté soit le last dans room.votes
     var room = getTheRoom(dataRoom);
     var players = getRealPlayers(dataRoom);
     var votes = room.votes;
     var votesTo = votes.map(function (vote) { return vote.to; });
-    var counts = {}; //We are going to count occurrence of item here
-    var compare = 0; //We are going to compare using stored value
-    var mostFrequent; //We are going to store most frequent item
-    var mostFrequentNotTraitor; //We are going to store most frequent item
-    for (var i = 0, len = votesTo.length; i < len; i++) {
-        var player = votesTo[i]; //
-        if (counts[player] === undefined) {
-            //if count[word] doesn't exist
-            counts[player] = 1; //set count[word] value to 1
-        }
-        else {
-            //if exists
-            counts[player] = counts[player] + 1; //increment existing value
-        }
-        if (counts[player] > compare) {
-            //counts[word] > 0(first time)
-            compare = counts[player]; //set compare to counts[word]
-            mostFrequent = votesTo[i]; //set mostFrequent value
-            if (votesTo[i].isTraitor == false)
-                mostFrequentNotTraitor = votesTo[i];
-        }
-        console.log(counts, i);
-    }
-    console.log(counts, "counts");
-    console.log(compare, "compare");
-    console.log(mostFrequent, "t");
-    console.log(mostFrequentNotTraitor, "not t");
+    var voteToClientId = votesTo.map(function (voteTo, i) { return ({ idClient: voteTo.idClient, i: i }); });
+    var arr = countOccurances(voteToClientId);
+    var size = Object.keys(arr).length;
+    var mostFrequent = players[0];
     return mostFrequent;
 }
 io.on("connection", function (socket) {
