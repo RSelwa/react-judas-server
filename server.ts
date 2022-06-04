@@ -17,7 +17,7 @@ const options = {
 const app = require("express")();
 const httpServer = require("http").createServer(app);
 const io = require("socket.io")(httpServer, options);
-
+const axios = require("axios");
 app.get("/", (req, res) => {
   res.send("Hello World! I'm a react server");
 });
@@ -52,10 +52,18 @@ type Vote = {
   to: Player;
   confirm: boolean;
 };
+type Question = {
+  _id: string;
+  question: string;
+  response: string;
+  __v: number;
+};
 const controllerName: string = "c";
 const viewerName: string = "v";
 let clients: Player[] = [];
 let rooms: Room[] = [];
+const urlAxios: string = `https://server-questions-judas.r-selwa.space/api/questionItems/`;
+
 function getClientByID(clientId: string): Player {
   //* get the id of the client in all the clients
   const client: Player = clients.find((client) => client.id == clientId);
@@ -112,6 +120,16 @@ function getMostVotedPlayer(dataRoom: string): Player {
 io.on("connection", (socket) => {
   const socketClientId = socket.client.id;
   console.log("🟢 new connection", socketClientId);
+  axios.get(urlAxios).then((res) => {
+    const allNotes: Question[] = res.data;
+    console.log(allNotes);
+    //   questionsResponse = res.data;
+    // const questionsResponse = res.data;
+    // setQuestions(questionsResponse);
+    socket.emit("getQuestionsResponse", {
+      questions: allNotes,
+    });
+  });
   function updateRoom(room: string) {
     updatePlayers(room);
     updateCagnottes(room, getTheRoom(room).cagnotte);
@@ -146,7 +164,9 @@ io.on("connection", (socket) => {
     });
   }
 
-  socket.on("test", (data: { room: string; audio: string }) => {});
+  socket.on("test", (data: { room: string }) => {
+    console.log("test");
+  });
 
   socket.on("disconnect", (data: any) => {
     console.log("🔴 user disconnect");

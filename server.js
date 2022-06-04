@@ -17,6 +17,7 @@ var options = {
 var app = require("express")();
 var httpServer = require("http").createServer(app);
 var io = require("socket.io")(httpServer, options);
+var axios = require("axios");
 app.get("/", function (req, res) {
     res.send("Hello World! I'm a react server");
 });
@@ -24,6 +25,7 @@ var controllerName = "c";
 var viewerName = "v";
 var clients = [];
 var rooms = [];
+var urlAxios = "https://server-questions-judas.r-selwa.space/api/questionItems/";
 function getClientByID(clientId) {
     //* get the id of the client in all the clients
     var client = clients.find(function (client) { return client.id == clientId; });
@@ -79,6 +81,16 @@ function getMostVotedPlayer(dataRoom) {
 io.on("connection", function (socket) {
     var socketClientId = socket.client.id;
     console.log("🟢 new connection", socketClientId);
+    axios.get(urlAxios).then(function (res) {
+        var allNotes = res.data;
+        console.log(allNotes);
+        //   questionsResponse = res.data;
+        // const questionsResponse = res.data;
+        // setQuestions(questionsResponse);
+        socket.emit("getQuestionsResponse", {
+            questions: allNotes
+        });
+    });
     function updateRoom(room) {
         updatePlayers(room);
         updateCagnottes(room, getTheRoom(room).cagnotte);
@@ -109,7 +121,9 @@ io.on("connection", function (socket) {
             inGame: room.inGame
         });
     }
-    socket.on("test", function (data) { });
+    socket.on("test", function (data) {
+        console.log("test");
+    });
     socket.on("disconnect", function (data) {
         console.log("🔴 user disconnect");
         var clientOnClients = getClientByID(socketClientId);
