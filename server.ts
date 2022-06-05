@@ -122,7 +122,6 @@ function getMostVotedPlayer(dataRoom: string): Player {
   //# si c'est 1 partout faire en sorte que le traitre ne soit pas designé comme le mostVoted, ici c'est le dernier player qui a été voté soit le last dans room.votes
   const selectInnocent: boolean = true;
   const room = getTheRoom(dataRoom);
-  const players: Player[] = getRealPlayers(dataRoom);
   const votes: Vote[] = room.votes;
   const votesTo: Player[] = votes.map((vote: Vote) => vote.to);
   const arr2: { idClient: string; occurrence: number }[] = findOcc(
@@ -130,20 +129,20 @@ function getMostVotedPlayer(dataRoom: string): Player {
     "idClient"
   );
   const maxOccurences: number = Math.max(...arr2.map((o) => o.occurrence));
-  console.log(arr2, "arr2");
-  console.log(maxOccurences, "maxOccurences");
   const result: { idClient: string; occurrence: number }[] = arr2.filter(
     (arr: { idClient: string; occurrence: number }) => {
       return arr.occurrence == maxOccurences;
     }
   );
-  console.log(result, "r");
   const mostVotedPlayer: Player =
     result.length > 1
-      ? getPlayerByIdClient(result[0].idClient, dataRoom).isTraitor &&
-        selectInnocent
-        ? getPlayerByIdClient(result[1].idClient, dataRoom)
-        : getPlayerByIdClient(result[0].idClient, dataRoom)
+      ? getPlayerByIdClient(result[0].idClient, dataRoom).isTraitor
+        ? selectInnocent
+          ? getPlayerByIdClient(result[1].idClient, dataRoom)
+          : getPlayerByIdClient(result[0].idClient, dataRoom)
+        : selectInnocent
+        ? getPlayerByIdClient(result[0].idClient, dataRoom)
+        : getPlayerByIdClient(result[1].idClient, dataRoom) //!s'il y a trois egalités, il faut loop pour trouver le traitre
       : getPlayerByIdClient(result[0].idClient, dataRoom);
   return mostVotedPlayer;
 }
