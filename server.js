@@ -32,6 +32,11 @@ function getClientByID(clientId) {
     return client;
     //   return clientId;
 }
+function getPlayerByIdClient(idClient, room) {
+    var players = getTheRoom(room).players;
+    var player = players.find(function (player) { return player.idClient == idClient; });
+    return player;
+}
 function getTheRoom(dataRoom) {
     return rooms.find(function (e) { return e.name == dataRoom; });
 }
@@ -43,33 +48,62 @@ function getRealPlayers(dataRoom) {
         });
     }
 }
-function countOccurances(arr) {
-    //on a un array d'object avec les string et ou fera un objet avec les valeurs, faut link les valeurs avec les tring
-    var out = {};
+function findOcc(arr, key) {
     var arr2 = [];
-    arr.forEach(function (el, i) {
-        out[el] = out[el] ? out[el] + 1 : 1;
+    arr.forEach(function (x) {
+        // Checking if there is any object in arr2
+        // which contains the key value
+        if (arr2.some(function (val) {
+            return val[key] == x[key];
+        })) {
+            // If yes! then increase the occurrence by 1
+            arr2.forEach(function (k) {
+                if (k[key] === x[key]) {
+                    k["occurrence"]++;
+                }
+            });
+        }
+        else {
+            // If not! Then create a new object initialize
+            // it with the present iteration key's value and
+            // set the occurrence to 1
+            var a = {};
+            a[key] = x[key];
+            a["occurrence"] = 1;
+            arr2.push(a);
+        }
     });
-    return out;
+    return arr2;
 }
 function getMostVotedPlayer(dataRoom) {
     //# si c'est 1 partout faire en sorte que le traitre ne soit pas designé comme le mostVoted, ici c'est le dernier player qui a été voté soit le last dans room.votes
+    var selectInnocent = true;
     var room = getTheRoom(dataRoom);
     var players = getRealPlayers(dataRoom);
     var votes = room.votes;
     var votesTo = votes.map(function (vote) { return vote.to; });
-    var voteToClientId = votesTo.map(function (voteTo, i) { return ({ idClient: voteTo.idClient, i: i }); });
-    var arr = countOccurances(voteToClientId);
-    var size = Object.keys(arr).length;
-    var mostFrequent = players[0];
-    return mostFrequent;
+    var arr2 = findOcc(votesTo, "idClient");
+    var maxOccurences = Math.max.apply(Math, arr2.map(function (o) { return o.occurrence; }));
+    console.log(arr2, "arr2");
+    console.log(maxOccurences, "maxOccurences");
+    var result = arr2.filter(function (arr) {
+        return arr.occurrence == maxOccurences;
+    });
+    console.log(result, "r");
+    var mostVotedPlayer = result.length > 1
+        ? getPlayerByIdClient(result[0].idClient, dataRoom).isTraitor &&
+            selectInnocent
+            ? getPlayerByIdClient(result[1].idClient, dataRoom)
+            : getPlayerByIdClient(result[0].idClient, dataRoom)
+        : getPlayerByIdClient(result[0].idClient, dataRoom);
+    return mostVotedPlayer;
 }
 io.on("connection", function (socket) {
     var socketClientId = socket.client.id;
     console.log("🟢 new connection", socketClientId);
     axios.get(urlAxios).then(function (res) {
         var allNotes = res.data;
-        console.log(allNotes);
+        // console.log(allNotes);
         //   questionsResponse = res.data;
         // const questionsResponse = res.data;
         // setQuestions(questionsResponse);

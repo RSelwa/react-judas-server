@@ -70,6 +70,11 @@ function getClientByID(clientId: string): Player {
   return client;
   //   return clientId;
 }
+function getPlayerByIdClient(idClient: string, room: string): Player {
+  const players: Player[] = getTheRoom(room).players;
+  const player = players.find((player: Player) => player.idClient == idClient);
+  return player;
+}
 function getTheRoom(dataRoom: string): Room {
   return rooms.find((e) => e.name == dataRoom);
 }
@@ -82,29 +87,65 @@ function getRealPlayers(dataRoom: string): Player[] {
     );
   }
 }
-function countOccurances(arr: any[]): any {
-  //on a un array d'object avec les string et ou fera un objet avec les valeurs, faut link les valeurs avec les tring
-  let out = {};
-  let arr2 = [];
-  arr.forEach((el: string, i: number) => {
-    out[el] = out[el] ? out[el] + 1 : 1;
+
+function findOcc(arr: any[], key: string) {
+  let arr2: any[] = [];
+
+  arr.forEach((x) => {
+    // Checking if there is any object in arr2
+    // which contains the key value
+    if (
+      arr2.some((val) => {
+        return val[key] == x[key];
+      })
+    ) {
+      // If yes! then increase the occurrence by 1
+      arr2.forEach((k) => {
+        if (k[key] === x[key]) {
+          k["occurrence"]++;
+        }
+      });
+    } else {
+      // If not! Then create a new object initialize
+      // it with the present iteration key's value and
+      // set the occurrence to 1
+      let a = {};
+      a[key] = x[key];
+      a["occurrence"] = 1;
+      arr2.push(a);
+    }
   });
-  return out;
+
+  return arr2;
 }
 function getMostVotedPlayer(dataRoom: string): Player {
   //# si c'est 1 partout faire en sorte que le traitre ne soit pas designé comme le mostVoted, ici c'est le dernier player qui a été voté soit le last dans room.votes
+  const selectInnocent: boolean = true;
   const room = getTheRoom(dataRoom);
   const players: Player[] = getRealPlayers(dataRoom);
   const votes: Vote[] = room.votes;
   const votesTo: Player[] = votes.map((vote: Vote) => vote.to);
-  const voteToClientId: { idClient: string; i: number }[] = votesTo.map(
-    (voteTo: Player, i: number) => ({ idClient: voteTo.idClient, i: i })
+  const arr2: { idClient: string; occurrence: number }[] = findOcc(
+    votesTo,
+    "idClient"
   );
-  const arr = countOccurances(voteToClientId);
-  var size = Object.keys(arr).length;
-
-  const mostFrequent: Player = players[0];
-  return mostFrequent;
+  const maxOccurences: number = Math.max(...arr2.map((o) => o.occurrence));
+  console.log(arr2, "arr2");
+  console.log(maxOccurences, "maxOccurences");
+  const result: { idClient: string; occurrence: number }[] = arr2.filter(
+    (arr: { idClient: string; occurrence: number }) => {
+      return arr.occurrence == maxOccurences;
+    }
+  );
+  console.log(result, "r");
+  const mostVotedPlayer: Player =
+    result.length > 1
+      ? getPlayerByIdClient(result[0].idClient, dataRoom).isTraitor &&
+        selectInnocent
+        ? getPlayerByIdClient(result[1].idClient, dataRoom)
+        : getPlayerByIdClient(result[0].idClient, dataRoom)
+      : getPlayerByIdClient(result[0].idClient, dataRoom);
+  return mostVotedPlayer;
 }
 
 io.on("connection", (socket) => {
@@ -112,7 +153,7 @@ io.on("connection", (socket) => {
   console.log("🟢 new connection", socketClientId);
   axios.get(urlAxios).then((res) => {
     const allNotes: Question[] = res.data;
-    console.log(allNotes);
+    // console.log(allNotes);
     //   questionsResponse = res.data;
     // const questionsResponse = res.data;
     // setQuestions(questionsResponse);
