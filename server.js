@@ -93,7 +93,7 @@ function getMostVotedPlayer(dataRoom) {
                 : getPlayerByIdClient(result[0].idClient, dataRoom)
             : selectInnocent
                 ? getPlayerByIdClient(result[0].idClient, dataRoom)
-                : getPlayerByIdClient(result[1].idClient, dataRoom) //!s'il y a trois egalités, il faut loop pour trouver le traitre
+                : getPlayerByIdClient(result[1].idClient, dataRoom) //! checker s'il y a un traitre dans l'egzlité parce que maybe que c'est eux innocent, et si oui faire un find, sinon prendre le premier, s'il y a trois egalités, il faut loop pour trouver le traitre
         : getPlayerByIdClient(result[0].idClient, dataRoom);
     return mostVotedPlayer;
 }
