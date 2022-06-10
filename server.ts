@@ -196,6 +196,7 @@ io.on("connection", (socket) => {
 
   socket.on("test", (data: { room: string }) => {
     console.log("test");
+    io.to(data.room).emit("testResponse", {});
   });
 
   socket.on("disconnect", (data: any) => {

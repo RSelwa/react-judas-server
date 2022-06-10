@@ -142,6 +142,7 @@ io.on("connection", function (socket) {
     }
     socket.on("test", function (data) {
         console.log("test");
+        io.to(data.room).emit("testResponse", {});
     });
     socket.on("disconnect", function (data) {
         console.log("🔴 user disconnect");
