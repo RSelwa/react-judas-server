@@ -510,6 +510,12 @@ io.on("connection", (socket) => {
       audio: data.audio,
     });
   });
+  socket.on("volumeAudio", (data: { room: string; volume: number }) => {
+    console.log(data.volume);
+    socket.emit("volumeAudioResponse", {
+      volume: data.volume,
+    });
+  });
 });
 
 httpServer.listen(PORT, () => {

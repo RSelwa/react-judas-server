@@ -407,6 +407,12 @@ io.on("connection", function (socket) {
             audio: data.audio
         });
     });
+    socket.on("volumeAudio", function (data) {
+        console.log(data.volume);
+        socket.emit("volumeAudioResponse", {
+            volume: data.volume
+        });
+    });
 });
 httpServer.listen(PORT, function () {
     console.log("\uD83D\uDE80 server is listening on port ".concat(PORT));
