@@ -408,6 +408,10 @@ io.on("connection", function (socket) {
             audio: data.audio
         });
     });
+    socket.on("stopAudio", function (data) {
+        console.log("stop audio");
+        io.to(data.room).emit("stopAudioResponse", {});
+    });
     socket.on("volumeAudio", function (data) {
         console.log(data.volume);
         socket.emit("volumeAudioResponse", {

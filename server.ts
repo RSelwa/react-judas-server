@@ -512,6 +512,10 @@ io.on("connection", (socket) => {
       audio: data.audio,
     });
   });
+  socket.on("stopAudio", (data: { room: string }) => {
+    console.log("stop audio");
+    io.to(data.room).emit("stopAudioResponse", {});
+  });
   socket.on("volumeAudio", (data: { room: string; volume: number }) => {
     console.log(data.volume);
     socket.emit("volumeAudioResponse", {
