@@ -216,7 +216,8 @@ io.on("connection", function (socket) {
                 votes: [],
                 votesLaunched: false,
                 questionsLaunched: false,
-                traitorId: ""
+                traitorId: "",
+                revealAnswerQuestion: false
             });
         }
         rooms.find(function (e) { return e.name == data.room; }).players.push(newPlayer);
@@ -416,6 +417,11 @@ io.on("connection", function (socket) {
         console.log(data.volume);
         socket.emit("volumeAudioResponse", {
             volume: data.volume
+        });
+    });
+    socket.on("toggleRevealAnswer", function (data) {
+        io.to(data.room).emit("toggleRevealAnswerResponse", {
+            revealAnswer: !data.revealAnswer
         });
     });
 });

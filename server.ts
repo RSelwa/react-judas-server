@@ -45,6 +45,7 @@ type Room = {
   votes: Vote[];
   votesLaunched: boolean;
   questionsLaunched: boolean;
+  revealAnswerQuestion: boolean;
   traitorId: string;
 };
 type Vote = {
@@ -286,6 +287,7 @@ io.on("connection", (socket) => {
           votesLaunched: false,
           questionsLaunched: false,
           traitorId: "",
+          revealAnswerQuestion: false,
         });
       }
       rooms.find((e) => e.name == data.room).players.push(newPlayer);
@@ -522,6 +524,14 @@ io.on("connection", (socket) => {
       volume: data.volume,
     });
   });
+  socket.on(
+    "toggleRevealAnswer",
+    (data: { room: string; revealAnswer: boolean }) => {
+      io.to(data.room).emit("toggleRevealAnswerResponse", {
+        revealAnswer: !data.revealAnswer,
+      });
+    }
+  );
 });
 
 httpServer.listen(PORT, () => {
