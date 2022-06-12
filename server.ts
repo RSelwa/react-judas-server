@@ -56,6 +56,7 @@ type Question = {
   _id: string;
   question: string;
   response: string;
+  numberOfSubs: number;
   __v: number;
 };
 const controllerName: string = "c";
