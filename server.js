@@ -44,7 +44,8 @@ function getRealPlayers(dataRoom) {
     var room = getTheRoom(dataRoom);
     if (room) {
         return room.players.filter(function (player) {
-            return player.name != controllerName && player.name != viewerName;
+            // player.name != controllerName && player.name != viewerName
+            return !player.isController && !player.isViewer;
         });
     }
 }
@@ -118,9 +119,11 @@ io.on("connection", function (socket) {
     function updatePlayers(room) {
         //* function that send all players except controller and viewer
         io.to(room).emit("updatePlayerResponse", {
-            players: getTheRoom(room).players.filter(function (player) {
-                return player.name != controllerName && player.name != viewerName;
-            })
+            // players: getTheRoom(room).players.filter(
+            //   (player: Player) =>
+            //     player.name != controllerName && player.name != viewerName
+            // ),
+            players: getRealPlayers(room)
         });
     }
     function updateCagnottes(room, cagnotte) {
@@ -234,22 +237,29 @@ io.on("connection", function (socket) {
             isTraitor: false,
             ptsCagnotte: 0,
             hasVoted: false,
-            voteConfirmed: false
+            voteConfirmed: false,
+            isController: data.controller,
+            isViewer: data.viewer
         };
         socket.emit("joinNameResponse", {
             name: data.name
         });
-        switch (data.name) {
-            case controllerName:
-                socket.emit("joinControllerResponse", {});
-                break;
-            case viewerName:
-                socket.emit("joinViewerResponse", {});
-                break;
-            default:
-                socket.emit("joinPlayerResponse", {});
-                break;
-        }
+        data.controller ? socket.emit("joinControllerResponse", {}) : "";
+        data.viewer ? socket.emit("joinViewerResponse", {}) : "";
+        data.controller || data.viewer
+            ? ""
+            : socket.emit("joinPlayerResponse", {});
+        // switch (data.name) {
+        //   case controllerName:
+        //     socket.emit("joinControllerResponse", {});
+        //     break;
+        //   case viewerName:
+        //     socket.emit("joinViewerResponse", {});
+        //     break;
+        //   default:
+        //     socket.emit("joinPlayerResponse", {});
+        //     break;
+        // }
         clients.push(newPlayer);
         //# initiate the room if doesn't exist yet
         if (rooms.find(function (e) { return e.name == data.room; }) == undefined) {
