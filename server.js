@@ -171,6 +171,60 @@ io.on("connection", function (socket) {
     });
     socket.on("joinRoom", function (data) {
         socket.join(data.room);
+        // const newPlayer: Player = {
+        //   id: socketClientId,
+        //   idClient: data.idClient,
+        //   room: data.room,
+        //   name: data.name,
+        //   pts: 0,
+        //   isTraitor: false,
+        //   ptsCagnotte: 0,
+        //   hasVoted: false,
+        //   voteConfirmed: false,
+        // };
+        socket.emit("joinRoomResponse", {
+            room: data.room
+        });
+        //   switch (data.name) {
+        //     case controllerName:
+        //       socket.emit("joinControllerResponse", {
+        //         room: data.room,
+        //       });
+        //       break;
+        //     case viewerName:
+        //       socket.emit("joinViewerResponse", {
+        //         room: data.room,
+        //       });
+        //       break;
+        //     default:
+        //       socket.emit("joinPlayerResponse", {});
+        //       break;
+        //   }
+        //   clients.push(newPlayer);
+        //   //# initiate the room if doesn't exist yet
+        //   if (rooms.find((e) => e.name == data.room) == undefined) {
+        //     rooms.push({
+        //       name: data.room,
+        //       inGame: false,
+        //       players: [],
+        //       cagnotte: {
+        //         room: data.room,
+        //         traitorValue: 0,
+        //         innocentValue: 0,
+        //       },
+        //       votes: [],
+        //       votesLaunched: false,
+        //       questionsLaunched: false,
+        //       traitorId: "",
+        //       revealAnswerQuestion: false,
+        //     });
+        //   }
+        //   rooms.find((e) => e.name == data.room).players.push(newPlayer);
+        //   updateRoom(data.room);
+        //   // updatePlayers(data.room);
+        //   // updateCagnottes(data.room, getTheRoom(data.room).cagnotte);
+    });
+    socket.on("joinName", function (data) {
         var newPlayer = {
             id: socketClientId,
             idClient: data.idClient,
@@ -182,20 +236,15 @@ io.on("connection", function (socket) {
             hasVoted: false,
             voteConfirmed: false
         };
-        socket.emit("joinRoomResponse", {
-            room: data.room,
+        socket.emit("joinNameResponse", {
             name: data.name
         });
         switch (data.name) {
             case controllerName:
-                socket.emit("joinControllerResponse", {
-                    room: data.room
-                });
+                socket.emit("joinControllerResponse", {});
                 break;
             case viewerName:
-                socket.emit("joinViewerResponse", {
-                    room: data.room
-                });
+                socket.emit("joinViewerResponse", {});
                 break;
             default:
                 socket.emit("joinPlayerResponse", {});
