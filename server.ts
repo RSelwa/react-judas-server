@@ -172,7 +172,7 @@ io.on("connection", (socket) => {
   }
   function updatePlayers(room: string): void {
     //* function that send all players except controller and viewer
-    io.to(room).emit("updatePlayerResponse", {
+    io.in(room).emit("updatePlayerResponse", {
       // players: getTheRoom(room).players.filter(
       //   (player: Player) =>
       //     player.name != controllerName && player.name != viewerName
@@ -181,7 +181,7 @@ io.on("connection", (socket) => {
     });
   }
   function updateCagnottes(room: string, cagnotte: Cagnotte): void {
-    io.to(room).emit("updateCagnottesResponse", {
+    io.in(room).emit("updateCagnottesResponse", {
       cagnotte: cagnotte,
       // players: getAllClientsWithSameRoom(dataRoom),
     });
@@ -189,7 +189,7 @@ io.on("connection", (socket) => {
   function updatesVotes(dataRoom: string): void {
     const room: Room = getTheRoom(dataRoom);
 
-    io.to(dataRoom).emit("voteResponse", {
+    io.in(dataRoom).emit("voteResponse", {
       votes: room.votes,
     });
   }
@@ -202,7 +202,8 @@ io.on("connection", (socket) => {
 
   socket.on("test", (data: { room: string }) => {
     console.log("test");
-    io.to(data.room).emit("testResponse", {});
+    io.in(data.room).emit("testResponse", {});
+    // socket.emit("testResponse", {});
   });
 
   socket.on("disconnect", (data: any) => {
@@ -321,7 +322,6 @@ io.on("connection", (socket) => {
       socket.emit("joinNameResponse", {
         name: data.name,
       });
-
       data.controller ? socket.emit("joinControllerResponse", {}) : "";
       data.viewer ? socket.emit("joinViewerResponse", {}) : "";
       data.controller || data.viewer
@@ -377,7 +377,7 @@ io.on("connection", (socket) => {
         ? (room.cagnotte.traitorValue += data.value)
         : (room.cagnotte.innocentValue += data.value);
       updateCagnottes(data.room, room.cagnotte);
-      io.to(data.room).emit("globalCagnoteAnimation", {
+      io.in(data.room).emit("globalCagnoteAnimation", {
         animationForInnocent: !data.isCagnottesTraitor,
       });
     }
@@ -432,7 +432,7 @@ io.on("connection", (socket) => {
     }
   });
   socket.on("toggleGameStatus", (data: { room: string; inGame: boolean }) => {
-    io.to(data.room).emit("statusGameResponse", {
+    io.in(data.room).emit("statusGameResponse", {
       inGame: !data.inGame,
     });
     console.log(!data.inGame ? "🟩 now in game" : "🟥 no game");
@@ -441,10 +441,10 @@ io.on("connection", (socket) => {
     console.log("✉️ votes initiate");
     const room: Room = getTheRoom(data.room);
     room.votesLaunched = true;
-    io.to(data.room).emit("launchVoteResponse", {
+    io.in(data.room).emit("launchVoteResponse", {
       votesLaunched: room.votesLaunched,
     });
-    io.to(data.room).emit("sendPLayersForVOtes", {
+    io.in(data.room).emit("sendPLayersForVOtes", {
       playersForVotes: getRealPlayers(data.room),
     });
   });
@@ -459,14 +459,14 @@ io.on("connection", (socket) => {
       player.voteConfirmed = false;
     });
     updatePlayers(data.room);
-    io.to(data.room).emit("stopVoteResponse", {
+    io.in(data.room).emit("stopVoteResponse", {
       votesLaunched: room.votesLaunched,
     });
-    io.to(data.room).emit("reinitiateVoteResposne", {
+    io.in(data.room).emit("reinitiateVoteResposne", {
       hasVoted: false,
       voteConfirmed: false,
     });
-    io.to(data.room).emit("everyOneHaseveryOneHasConfirmedVoteResponse", {
+    io.in(data.room).emit("everyOneHaseveryOneHasConfirmedVoteResponse", {
       everyOneHasConfirmedVote: false,
     });
   });
@@ -476,7 +476,7 @@ io.on("connection", (socket) => {
       console.log(data.questionsLaunched);
       const room: Room = getTheRoom(data.room);
       room.questionsLaunched = !data.questionsLaunched;
-      io.to(data.room).emit("toggleLaunchQuestionsResponse", {
+      io.in(data.room).emit("toggleLaunchQuestionsResponse", {
         launchedQuestions: room.questionsLaunched,
       });
     }
@@ -500,7 +500,7 @@ io.on("connection", (socket) => {
         : data.numberQuestion == 0
         ? (newNumberQuestion = data.numberQuestion)
         : (newNumberQuestion = data.numberQuestion - 1);
-      io.to(data.room).emit("arrowQuestionsResponse", {
+      io.in(data.room).emit("arrowQuestionsResponse", {
         newNumberQuestion: newNumberQuestion,
       });
     }
@@ -558,7 +558,7 @@ io.on("connection", (socket) => {
       const everyOneHasConfirmedVote: boolean = votes.every(
         (vote: Vote) => vote.confirm === true
       );
-      io.to(data.room).emit("everyOneHaseveryOneHasConfirmedVoteResponse", {
+      io.in(data.room).emit("everyOneHaseveryOneHasConfirmedVoteResponse", {
         everyOneHasConfirmedVote: everyOneHasConfirmedVote,
       });
     }
@@ -571,20 +571,20 @@ io.on("connection", (socket) => {
     const numberSubWinner: number = mostVotedPlayer.isTraitor
       ? room.cagnotte.innocentValue
       : room.cagnotte.traitorValue;
-    io.to(data.room).emit("demandVotesResultResponse", {
+    io.in(data.room).emit("demandVotesResultResponse", {
       mostVotedPlayer: mostVotedPlayer,
       displayVotesResult: true,
       numberSubWinner: numberSubWinner,
     });
   });
   socket.on("playAudio", (data: { room: string; audio: string }) => {
-    io.to(data.room).emit("playAudioResponse", {
+    io.in(data.room).emit("playAudioResponse", {
       audio: data.audio,
     });
   });
   socket.on("stopAudio", (data: { room: string }) => {
     console.log("stop audio");
-    io.to(data.room).emit("stopAudioResponse", {});
+    io.in(data.room).emit("stopAudioResponse", {});
   });
   socket.on("volumeAudio", (data: { room: string; volume: number }) => {
     console.log(data.volume);
@@ -595,7 +595,7 @@ io.on("connection", (socket) => {
   socket.on(
     "toggleRevealAnswer",
     (data: { room: string; revealAnswer: boolean }) => {
-      io.to(data.room).emit("toggleRevealAnswerResponse", {
+      io.in(data.room).emit("toggleRevealAnswerResponse", {
         revealAnswer: !data.revealAnswer,
       });
     }
