@@ -578,6 +578,7 @@ io.on("connection", (socket) => {
     });
   });
   socket.on("playAudio", (data: { room: string; audio: string }) => {
+    // socket.on("playAudio", (data: { room: string; audio: HTMLAudioElement }) => {
     io.in(data.room).emit("playAudioResponse", {
       audio: data.audio,
     });
