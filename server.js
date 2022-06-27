@@ -277,7 +277,9 @@ io.on("connection", function (socket) {
                 votesLaunched: false,
                 questionsLaunched: false,
                 traitorId: "",
-                revealAnswerQuestion: false
+                revealAnswerQuestion: false,
+                voiceIALaunched: false,
+                justePrixLaunched: false
             });
         }
         rooms.find(function (e) { return e.name == data.room; }).players.push(newPlayer);
@@ -386,6 +388,14 @@ io.on("connection", function (socket) {
         room.questionsLaunched = !data.questionsLaunched;
         io["in"](data.room).emit("toggleLaunchQuestionsResponse", {
             launchedQuestions: room.questionsLaunched
+        });
+    });
+    socket.on("toggleLauncheVoiceIa", function (data) {
+        console.log("toggle voice IA");
+        var room = getTheRoom(data.room);
+        room.voiceIALaunched = !data.voiceIALaunched;
+        io["in"](data.room).emit("toggleLauncheVoiceIaResponse", {
+            voiceIALaunched: room.voiceIALaunched
         });
     });
     socket.on("arrowQuestions", function (data) {

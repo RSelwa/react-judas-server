@@ -47,6 +47,8 @@ type Room = {
   votes: Vote[];
   votesLaunched: boolean;
   questionsLaunched: boolean;
+  voiceIALaunched: boolean;
+  justePrixLaunched: boolean;
   revealAnswerQuestion: boolean;
   traitorId: string;
 };
@@ -356,6 +358,8 @@ io.on("connection", (socket) => {
           questionsLaunched: false,
           traitorId: "",
           revealAnswerQuestion: false,
+          voiceIALaunched: false,
+          justePrixLaunched: false,
         });
       }
       rooms.find((e) => e.name == data.room).players.push(newPlayer);
@@ -478,6 +482,17 @@ io.on("connection", (socket) => {
       room.questionsLaunched = !data.questionsLaunched;
       io.in(data.room).emit("toggleLaunchQuestionsResponse", {
         launchedQuestions: room.questionsLaunched,
+      });
+    }
+  );
+  socket.on(
+    "toggleLauncheVoiceIa",
+    (data: { room: string; voiceIALaunched: boolean }) => {
+      console.log("toggle voice IA");
+      const room: Room = getTheRoom(data.room);
+      room.voiceIALaunched = !data.voiceIALaunched;
+      io.in(data.room).emit("toggleLauncheVoiceIaResponse", {
+        voiceIALaunched: room.voiceIALaunched,
       });
     }
   );
