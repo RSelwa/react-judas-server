@@ -279,7 +279,8 @@ io.on("connection", function (socket) {
                 traitorId: "",
                 revealAnswerQuestion: false,
                 voiceIALaunched: false,
-                justePrixLaunched: false
+                justePrixLaunched: false,
+                voiceIAVoicePlayed: false
             });
         }
         rooms.find(function (e) { return e.name == data.room; }).players.push(newPlayer);
@@ -396,6 +397,21 @@ io.on("connection", function (socket) {
         room.voiceIALaunched = !data.voiceIALaunched;
         io["in"](data.room).emit("toggleLauncheVoiceIaResponse", {
             voiceIALaunched: room.voiceIALaunched
+        });
+    });
+    socket.on("toggleVoiceIAVoicePlayed", function (data) {
+        console.log("toggle play voice IA");
+        var room = getTheRoom(data.room);
+        room.voiceIAVoicePlayed = !data.voiceIAVoicePlayed;
+        io["in"](data.room).emit("toggleVoiceIAVoicePlayedResponse", {
+            voiceIAVoicePlayed: room.voiceIAVoicePlayed
+        });
+    });
+    socket.on("selectVoiceIA", function (data) {
+        console.log(data.selectedVoiceIA);
+        var room = getTheRoom(data.room);
+        io["in"](data.room).emit("selectVoiceIAResponse", {
+            selectedVoiceIA: data.selectedVoiceIA
         });
     });
     socket.on("arrowQuestions", function (data) {

@@ -48,6 +48,7 @@ type Room = {
   votesLaunched: boolean;
   questionsLaunched: boolean;
   voiceIALaunched: boolean;
+  voiceIAVoicePlayed: boolean;
   justePrixLaunched: boolean;
   revealAnswerQuestion: boolean;
   traitorId: string;
@@ -360,6 +361,7 @@ io.on("connection", (socket) => {
           revealAnswerQuestion: false,
           voiceIALaunched: false,
           justePrixLaunched: false,
+          voiceIAVoicePlayed: false,
         });
       }
       rooms.find((e) => e.name == data.room).players.push(newPlayer);
@@ -493,6 +495,30 @@ io.on("connection", (socket) => {
       room.voiceIALaunched = !data.voiceIALaunched;
       io.in(data.room).emit("toggleLauncheVoiceIaResponse", {
         voiceIALaunched: room.voiceIALaunched,
+      });
+    }
+  );
+  socket.on(
+    "toggleVoiceIAVoicePlayed",
+    (data: { room: string; voiceIAVoicePlayed: boolean }) => {
+      console.log("toggle play voice IA");
+      const room: Room = getTheRoom(data.room);
+      room.voiceIAVoicePlayed = !data.voiceIAVoicePlayed;
+      io.in(data.room).emit("toggleVoiceIAVoicePlayedResponse", {
+        voiceIAVoicePlayed: room.voiceIAVoicePlayed,
+      });
+    }
+  );
+  socket.on(
+    "selectVoiceIA",
+    (data: {
+      room: string;
+      selectedVoiceIA: { voice: string; text: string };
+    }) => {
+      console.log(data.selectedVoiceIA);
+      const room: Room = getTheRoom(data.room);
+      io.in(data.room).emit("selectVoiceIAResponse", {
+        selectedVoiceIA: data.selectedVoiceIA,
       });
     }
   );
