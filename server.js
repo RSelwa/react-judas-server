@@ -409,9 +409,13 @@ io.on("connection", function (socket) {
     });
     socket.on("selectVoiceIA", function (data) {
         console.log(data.selectedVoiceIA);
-        var room = getTheRoom(data.room);
         io["in"](data.room).emit("selectVoiceIAResponse", {
             selectedVoiceIA: data.selectedVoiceIA
+        });
+    });
+    socket.on("unselectVoiceIA", function (data) {
+        io["in"](data.room).emit("unselectVoiceIAResponse", {
+            selectedVoiceIA: { voice: "", text: "" }
         });
     });
     socket.on("arrowQuestions", function (data) {

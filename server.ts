@@ -516,12 +516,16 @@ io.on("connection", (socket) => {
       selectedVoiceIA: { voice: string; text: string };
     }) => {
       console.log(data.selectedVoiceIA);
-      const room: Room = getTheRoom(data.room);
       io.in(data.room).emit("selectVoiceIAResponse", {
         selectedVoiceIA: data.selectedVoiceIA,
       });
     }
   );
+  socket.on("unselectVoiceIA", (data: { room: string }) => {
+    io.in(data.room).emit("unselectVoiceIAResponse", {
+      selectedVoiceIA: { voice: "", text: "" },
+    });
+  });
   socket.on(
     "arrowQuestions",
     (data: {
