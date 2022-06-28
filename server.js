@@ -280,7 +280,8 @@ io.on("connection", function (socket) {
                 revealAnswerQuestion: false,
                 voiceIALaunched: false,
                 justePrixLaunched: false,
-                voiceIAVoicePlayed: false
+                voiceIAVoicePlayed: false,
+                revealVoiceIAAnswer: false
             });
         }
         rooms.find(function (e) { return e.name == data.room; }).players.push(newPlayer);
@@ -413,9 +414,21 @@ io.on("connection", function (socket) {
             selectedVoiceIA: data.selectedVoiceIA
         });
     });
+    socket.on("revealVoiceIAAnswer", function (data) {
+        var room = getTheRoom(data.room);
+        room.revealVoiceIAAnswer = data.revealVoiceIAAnswer;
+        io["in"](data.room).emit("revealVoiceIAAnswerResponse", {
+            revealVoiceIAAnswer: room.revealVoiceIAAnswer
+        });
+    });
+    socket.on("answersVoiceIAAnswer", function (data) {
+        io["in"](data.room).emit("answersVoiceIAAnswerResponse", {
+            goodAnswer: data.goodAnswer
+        });
+    });
     socket.on("unselectVoiceIA", function (data) {
         io["in"](data.room).emit("unselectVoiceIAResponse", {
-            selectedVoiceIA: { voice: "", text: "" }
+            selectedVoiceIA: { voice: "", text: "", anwser: "" }
         });
     });
     socket.on("arrowQuestions", function (data) {

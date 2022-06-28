@@ -21,6 +21,7 @@ const axios = require("axios");
 app.get("/", (req, res) => {
   res.send("Hello World! I'm a react server");
 });
+type VoiceIA = { voice: string; text: string; answer: string };
 type Player = {
   id?: string;
   idClient?: string;
@@ -51,6 +52,7 @@ type Room = {
   voiceIAVoicePlayed: boolean;
   justePrixLaunched: boolean;
   revealAnswerQuestion: boolean;
+  revealVoiceIAAnswer: boolean;
   traitorId: string;
 };
 type Vote = {
@@ -362,6 +364,7 @@ io.on("connection", (socket) => {
           voiceIALaunched: false,
           justePrixLaunched: false,
           voiceIAVoicePlayed: false,
+          revealVoiceIAAnswer: false,
         });
       }
       rooms.find((e) => e.name == data.room).players.push(newPlayer);
@@ -511,19 +514,35 @@ io.on("connection", (socket) => {
   );
   socket.on(
     "selectVoiceIA",
-    (data: {
-      room: string;
-      selectedVoiceIA: { voice: string; text: string };
-    }) => {
+    (data: { room: string; selectedVoiceIA: VoiceIA }) => {
       console.log(data.selectedVoiceIA);
       io.in(data.room).emit("selectVoiceIAResponse", {
         selectedVoiceIA: data.selectedVoiceIA,
       });
     }
   );
+  socket.on(
+    "revealVoiceIAAnswer",
+    (data: { room: string; revealVoiceIAAnswer: boolean }) => {
+      const room = getTheRoom(data.room);
+      room.revealVoiceIAAnswer = data.revealVoiceIAAnswer;
+      io.in(data.room).emit("revealVoiceIAAnswerResponse", {
+        revealVoiceIAAnswer: room.revealVoiceIAAnswer,
+      });
+    }
+  );
+  socket.on(
+    "answersVoiceIAAnswer",
+    (data: { room: string; goodAnswer: boolean }) => {
+      io.in(data.room).emit("answersVoiceIAAnswerResponse", {
+        goodAnswer: data.goodAnswer,
+      });
+    }
+  );
+
   socket.on("unselectVoiceIA", (data: { room: string }) => {
     io.in(data.room).emit("unselectVoiceIAResponse", {
-      selectedVoiceIA: { voice: "", text: "" },
+      selectedVoiceIA: { voice: "", text: "", anwser: "" },
     });
   });
   socket.on(
