@@ -413,6 +413,7 @@ io.on("connection", function (socket) {
         io["in"](data.room).emit("selectVoiceIAResponse", {
             selectedVoiceIA: data.selectedVoiceIA
         });
+        io["in"](data.room).emit("selectVoiceIAResponseAnimation", {});
     });
     socket.on("revealVoiceIAAnswer", function (data) {
         var room = getTheRoom(data.room);
@@ -423,6 +424,9 @@ io.on("connection", function (socket) {
     });
     socket.on("answersVoiceIAAnswer", function (data) {
         io["in"](data.room).emit("answersVoiceIAAnswerResponse", {
+            goodAnswer: data.goodAnswer
+        });
+        io["in"](data.room).emit("answersVoiceIAAnswerResponseAnimation", {
             goodAnswer: data.goodAnswer
         });
     });

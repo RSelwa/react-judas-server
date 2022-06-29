@@ -519,6 +519,7 @@ io.on("connection", (socket) => {
       io.in(data.room).emit("selectVoiceIAResponse", {
         selectedVoiceIA: data.selectedVoiceIA,
       });
+      io.in(data.room).emit("selectVoiceIAResponseAnimation", {});
     }
   );
   socket.on(
@@ -535,6 +536,9 @@ io.on("connection", (socket) => {
     "answersVoiceIAAnswer",
     (data: { room: string; goodAnswer: boolean }) => {
       io.in(data.room).emit("answersVoiceIAAnswerResponse", {
+        goodAnswer: data.goodAnswer,
+      });
+      io.in(data.room).emit("answersVoiceIAAnswerResponseAnimation", {
         goodAnswer: data.goodAnswer,
       });
     }
