@@ -519,9 +519,13 @@ io.on("connection", (socket) => {
       io.in(data.room).emit("selectVoiceIAResponse", {
         selectedVoiceIA: data.selectedVoiceIA,
       });
+      //?
       io.in(data.room).emit("selectVoiceIAResponseAnimation", {});
     }
   );
+  socket.on("voiceIAPanelAnimation", (data: { room: string }) => {
+    io.in(data.room).emit("voiceIAPanelAnimationZoomOutResponse", {});
+  });
   socket.on(
     "revealVoiceIAAnswer",
     (data: { room: string; revealVoiceIAAnswer: boolean }) => {

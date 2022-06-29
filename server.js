@@ -413,7 +413,11 @@ io.on("connection", function (socket) {
         io["in"](data.room).emit("selectVoiceIAResponse", {
             selectedVoiceIA: data.selectedVoiceIA
         });
+        //?
         io["in"](data.room).emit("selectVoiceIAResponseAnimation", {});
+    });
+    socket.on("voiceIAPanelAnimation", function (data) {
+        io["in"](data.room).emit("voiceIAPanelAnimationZoomOutResponse", {});
     });
     socket.on("revealVoiceIAAnswer", function (data) {
         var room = getTheRoom(data.room);
