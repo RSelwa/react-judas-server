@@ -23,7 +23,7 @@ app.get("/", (req, res) => {
 });
 type VoiceIA = { voice: string; text: string; answer: string };
 type Player = {
-  id?: string;
+  idServer?: string;
   idClient?: string;
   room: string;
   name: string;
@@ -42,7 +42,7 @@ type Cagnotte = {
 };
 type Room = {
   name: string;
-  inGame: boolean;
+  isInGame: boolean;
   players: Player[];
   cagnotte: Cagnotte;
   votes: Vote[];
@@ -67,15 +67,13 @@ type Question = {
   numberOfSubs: number;
   __v: number;
 };
-const controllerName: string = "c";
-const viewerName: string = "v";
 let clients: Player[] = [];
 let rooms: Room[] = [];
-const urlAxios: string = `https://server-questions-judas.r-selwa.space/api/questionItems/`;
+// const urlAxios: string = `https://server-questions-judas.r-selwa.space/api/questionItems/`;
 
 function getClientByID(clientId: string): Player {
   //* get the id of the client in all the clients
-  const client: Player = clients.find((client) => client.id == clientId);
+  const client: Player = clients.find((client) => client.idServer == clientId);
   return client;
   //   return clientId;
 }
@@ -91,9 +89,7 @@ function getRealPlayers(dataRoom: string): Player[] {
   const room: Room = getTheRoom(dataRoom);
   if (room) {
     return room.players.filter(
-      (player: Player) =>
-        // player.name != controllerName && player.name != viewerName
-        !player.isController && !player.isViewer
+      (player: Player) => !player.isController && !player.isViewer
     );
   }
 }
@@ -160,64 +156,18 @@ function getMostVotedPlayer(dataRoom: string): Player {
 io.on("connection", (socket) => {
   const socketClientId = socket.client.id;
   console.log("🟢 new connection", socketClientId);
-  axios.get(urlAxios).then((res) => {
-    const allNotes: Question[] = res.data;
-    // console.log(allNotes);
-    //   questionsResponse = res.data;
-    // const questionsResponse = res.data;
-    // setQuestions(questionsResponse);
-    socket.emit("getQuestionsResponse", {
-      questions: allNotes,
+  const updateRoomClient = (roomId: string) => {
+    io.in(roomId).emit("updateRoom", {
+      room: getTheRoom(roomId),
     });
-  });
-  function updateRoom(room: string) {
-    updatePlayers(room);
-    updateCagnottes(room, getTheRoom(room).cagnotte);
-    updatesInRoom(room);
-  }
-  function updatePlayers(room: string): void {
-    //* function that send all players except controller and viewer
-    io.in(room).emit("updatePlayerResponse", {
-      // players: getTheRoom(room).players.filter(
-      //   (player: Player) =>
-      //     player.name != controllerName && player.name != viewerName
-      // ),
-      players: getRealPlayers(room),
-    });
-  }
-  function updateCagnottes(room: string, cagnotte: Cagnotte): void {
-    io.in(room).emit("updateCagnottesResponse", {
-      cagnotte: cagnotte,
-      // players: getAllClientsWithSameRoom(dataRoom),
-    });
-  }
-  function updatesVotes(dataRoom: string): void {
-    const room: Room = getTheRoom(dataRoom);
-
-    io.in(dataRoom).emit("voteResponse", {
-      votes: room.votes,
-    });
-  }
-  function updatesInRoom(dataRoom: string): void {
-    const room: Room = getTheRoom(dataRoom);
-    socket.emit("statusGameResponse", {
-      inGame: room.inGame,
-    });
-  }
-
-  socket.on("test", (data: { room: string }) => {
-    console.log("test");
-    io.in(data.room).emit("testResponse", {});
-    // socket.emit("testResponse", {});
-  });
-
-  socket.on("disconnect", (data: any) => {
-    console.log("🔴 user disconnect");
+  };
+  const removePlayer = () => {
     const clientOnClients: Player = getClientByID(socketClientId);
     //* if clients exists in clients
     if (clientOnClients) {
       //* find the room of the player
       const roomOfPlayer: Room = getTheRoom(clientOnClients.room);
+
       //* trouve le joueur dans room.player qui correspond à l'clientOnClients (qui est notre joueur deconnecté by id), puis le supprime de room.players
       roomOfPlayer.players.splice(
         roomOfPlayer.players.indexOf(
@@ -245,62 +195,57 @@ io.on("connection", (socket) => {
         updatePlayers(clientOnClients.room);
       }
     }
+  };
+  function updatePlayers(room: string): void {
+    //* function that send all players except controller and viewer
+    io.in(room).emit("updatePlayerResponse", {
+      players: getRealPlayers(room),
+    });
+  }
+  function updateCagnottes(room: string, cagnotte: Cagnotte): void {
+    io.in(room).emit("updateCagnottesResponse", {
+      cagnotte: cagnotte,
+      // players: getAllClientsWithSameRoom(dataRoom),
+    });
+  }
+  function updatesVotes(dataRoom: string): void {
+    const room: Room = getTheRoom(dataRoom);
+
+    io.in(dataRoom).emit("voteResponse", {
+      votes: room.votes,
+    });
+  }
+  function updatesInRoom(dataRoom: string): void {
+    const room: Room = getTheRoom(dataRoom);
+    socket.emit("statusGameResponse", {
+      isInGame: room.isInGame,
+    });
+  }
+
+  socket.on("test", (data: { room: string }) => {
+    console.log("test");
+    io.in(data.room).emit("testResponse", {});
+    // socket.emit("testResponse", {});
   });
+
+  socket.on("disconnect", (data: any) => {
+    console.log("🔴 user disconnect");
+    removePlayer();
+  });
+
+  socket.on("goBackToLobby", () => {
+    console.log("🟠 user go back to lobby");
+    removePlayer();
+  });
+
   socket.on("joinRoom", (data: { room: string }) => {
+    console.log("join room ", data.room);
+
     socket.join(data.room);
-    // const newPlayer: Player = {
-    //   id: socketClientId,
-    //   idClient: data.idClient,
-    //   room: data.room,
-    //   name: data.name,
-    //   pts: 0,
-    //   isTraitor: false,
-    //   ptsCagnotte: 0,
-    //   hasVoted: false,
-    //   voteConfirmed: false,
-    // };
     socket.emit("joinRoomResponse", {
       room: data.room,
     });
-    //   switch (data.name) {
-    //     case controllerName:
-    //       socket.emit("joinControllerResponse", {
-    //         room: data.room,
-    //       });
-    //       break;
-    //     case viewerName:
-    //       socket.emit("joinViewerResponse", {
-    //         room: data.room,
-    //       });
-    //       break;
-
-    //     default:
-    //       socket.emit("joinPlayerResponse", {});
-    //       break;
-    //   }
-    //   clients.push(newPlayer);
-    //   //# initiate the room if doesn't exist yet
-    //   if (rooms.find((e) => e.name == data.room) == undefined) {
-    //     rooms.push({
-    //       name: data.room,
-    //       inGame: false,
-    //       players: [],
-    //       cagnotte: {
-    //         room: data.room,
-    //         traitorValue: 0,
-    //         innocentValue: 0,
-    //       },
-    //       votes: [],
-    //       votesLaunched: false,
-    //       questionsLaunched: false,
-    //       traitorId: "",
-    //       revealAnswerQuestion: false,
-    //     });
-    //   }
-    //   rooms.find((e) => e.name == data.room).players.push(newPlayer);
-    //   updateRoom(data.room);
-    //   // updatePlayers(data.room);
-    //   // updateCagnottes(data.room, getTheRoom(data.room).cagnotte);
+    updateRoomClient(data.room);
   });
   socket.on(
     "joinName",
@@ -311,8 +256,13 @@ io.on("connection", (socket) => {
       controller: boolean;
       viewer: boolean;
     }) => {
+      console.log(clients);
+      if (clients.some((client) => client.idClient === data.idClient)) {
+        return;
+      }
+
       const newPlayer: Player = {
-        id: socketClientId,
+        idServer: socketClientId,
         idClient: data.idClient,
         room: data.room,
         name: data.name,
@@ -324,32 +274,21 @@ io.on("connection", (socket) => {
         isController: data.controller,
         isViewer: data.viewer,
       };
+      clients.push(newPlayer);
       socket.emit("joinNameResponse", {
         name: data.name,
+        room: data.room,
+        player: newPlayer,
       });
-      data.controller ? socket.emit("joinControllerResponse", {}) : "";
-      data.viewer ? socket.emit("joinViewerResponse", {}) : "";
-      data.controller || data.viewer
-        ? ""
-        : socket.emit("joinPlayerResponse", {});
-      // switch (data.name) {
-      //   case controllerName:
-      //     socket.emit("joinControllerResponse", {});
-      //     break;
-      //   case viewerName:
-      //     socket.emit("joinViewerResponse", {});
-      //     break;
+      data.controller && socket.emit("joinControllerResponse", {});
+      data.viewer && socket.emit("joinViewerResponse", {});
+      !data.controller && !data.viewer && socket.emit("joinPlayerResponse", {});
 
-      //   default:
-      //     socket.emit("joinPlayerResponse", {});
-      //     break;
-      // }
-      clients.push(newPlayer);
       //# initiate the room if doesn't exist yet
       if (rooms.find((e) => e.name == data.room) == undefined) {
         rooms.push({
           name: data.room,
-          inGame: false,
+          isInGame: false,
           players: [],
           cagnotte: {
             room: data.room,
@@ -368,11 +307,12 @@ io.on("connection", (socket) => {
         });
       }
       rooms.find((e) => e.name == data.room).players.push(newPlayer);
-      updateRoom(data.room);
-      // updatePlayers(data.room);
-      // updateCagnottes(data.room, getTheRoom(data.room).cagnotte);
+      updateRoomClient(data.room);
     }
   );
+  socket.on("fetchRoom", (data: { room: string }) => {
+    updateRoomClient(data.room);
+  });
   socket.on("revealRole", (data: { viewerRevealRole: boolean }) => {
     socket.emit("revealRoleResponse", {
       viewerRevealRole: !data.viewerRevealRole,
@@ -405,7 +345,7 @@ io.on("connection", (socket) => {
   socket.on(
     "modifyPlayerPts",
     (data: { room: string; playerId: string; newValue: number }) => {
-      const playerIndex = clients.findIndex((e) => e.id == data.playerId);
+      const playerIndex = clients.findIndex((e) => e.idServer == data.playerId);
       if (clients[playerIndex]) {
         if (clients[playerIndex].pts == 0 && data.newValue == -1) {
           clients[playerIndex].pts = clients[playerIndex].pts;
@@ -417,7 +357,7 @@ io.on("connection", (socket) => {
     }
   );
   //# start game
-  socket.on("selectTraitor", (data: { room: string }) => {
+  socket.on("startGame", (data: { room: string }) => {
     const room: Room = getTheRoom(data.room);
     const realPlayers: Player[] = getRealPlayers(data.room);
     if (realPlayers.length > 0) {
@@ -425,11 +365,12 @@ io.on("connection", (socket) => {
         realPlayers[Math.floor(Math.random() * realPlayers.length)];
       room.traitorId = randomTraitor.idClient;
       room.players.find((player) => player == randomTraitor).isTraitor = true;
-      updatePlayers(data.room);
+      room.isInGame = true;
+      updateRoomClient(data.room);
     }
   });
   //# stop game
-  socket.on("resetTraitor", (data: { room: string }) => {
+  socket.on("stopGame", (data: { room: string }) => {
     const room: Room = getTheRoom(data.room);
     const playerTraitor: Player = room.players.find(
       (player: Player) => player.isTraitor == true
@@ -437,14 +378,15 @@ io.on("connection", (socket) => {
     if (playerTraitor) {
       playerTraitor.isTraitor = false;
       room.traitorId = "";
-      updatePlayers(data.room);
+      room.isInGame = false;
+      updateRoomClient(data.room);
     }
   });
-  socket.on("toggleGameStatus", (data: { room: string; inGame: boolean }) => {
+  socket.on("toggleGameStatus", (data: { room: string; isInGame: boolean }) => {
     io.in(data.room).emit("statusGameResponse", {
-      inGame: !data.inGame,
+      isInGame: !data.isInGame,
     });
-    console.log(!data.inGame ? "🟩 now in game" : "🟥 no game");
+    console.log(!data.isInGame ? "🟩 now in game" : "🟥 no game");
   });
   socket.on("launchVote", (data: { room: string }) => {
     console.log("✉️ votes initiate");
