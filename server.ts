@@ -192,7 +192,8 @@ io.on("connection", (socket) => {
       //*remove players from clients
       clients.splice(clients.indexOf(clientOnClients), 1);
       if (roomOfPlayer.players.length > 0) {
-        updatePlayers(clientOnClients.room);
+        updateRoomClient(clientOnClients.room);
+        // updatePlayers(clientOnClients.room);
       }
     }
   };
@@ -229,6 +230,8 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", (data: any) => {
+    console.log(data);
+
     console.log("🔴 user disconnect");
     removePlayer();
   });
@@ -311,6 +314,20 @@ io.on("connection", (socket) => {
     }
   );
   socket.on("fetchRoom", (data: { room: string }) => {
+    console.log(getTheRoom(data.room));
+    console.log(socket.client.id);
+
+    //! check if player is coming directely from link to game
+    if (
+      !getTheRoom(data.room) ||
+      !getTheRoom(data.room)!.players.some(
+        (player) => player.idServer === socket.client.id
+      )
+    ) {
+      console.log("redirect to lobby or to main menu");
+      socket.emit("redirectToMain", {});
+    }
+
     updateRoomClient(data.room);
   });
   socket.on("revealRole", (data: { viewerRevealRole: boolean }) => {
@@ -365,9 +382,9 @@ io.on("connection", (socket) => {
         realPlayers[Math.floor(Math.random() * realPlayers.length)];
       room.traitorId = randomTraitor.idClient;
       room.players.find((player) => player == randomTraitor).isTraitor = true;
-      room.isInGame = true;
-      updateRoomClient(data.room);
     }
+    room.isInGame = true;
+    updateRoomClient(data.room);
   });
   //# stop game
   socket.on("stopGame", (data: { room: string }) => {
