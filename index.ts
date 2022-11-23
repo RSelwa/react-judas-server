@@ -9,6 +9,7 @@ const options = {
       "http://localhost:8080",
       "http://192.168.1.23:8080",
       "http://localhost:3000",
+      "http://localhost:3001",
       "http://192.168.1.23:3000",
     ],
     methods: ["GET", "POST"],
@@ -16,6 +17,7 @@ const options = {
 };
 const app = require("express")();
 const httpServer = require("http").createServer(app);
+// const io = require("socket.io")(httpServer);
 const io = require("socket.io")(httpServer, options);
 const axios = require("axios");
 app.get("/", (req, res) => {
