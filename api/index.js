@@ -11,8 +11,8 @@ var options = {
             "http://localhost:3000",
             "http://192.168.1.23:3000",
         ],
-        methods: ["GET", "POST"]
-    }
+        methods: ["GET", "POST"],
+    },
 };
 var app = require("express")();
 var httpServer = require("http").createServer(app);
@@ -97,8 +97,8 @@ io.on("connection", function (socket) {
     var socketClientId = socket.client.id;
     console.log("🟢 new connection", socketClientId);
     var updateRoomClient = function (roomId) {
-        io["in"](roomId).emit("updateRoom", {
-            room: getTheRoom(roomId)
+        io.in(roomId).emit("updateRoom", {
+            room: getTheRoom(roomId),
         });
     };
     var removePlayer = function () {
@@ -128,30 +128,31 @@ io.on("connection", function (socket) {
     };
     function updatePlayers(room) {
         //* function that send all players except controller and viewer
-        io["in"](room).emit("updatePlayerResponse", {
-            players: getRealPlayers(room)
+        io.in(room).emit("updatePlayerResponse", {
+            players: getRealPlayers(room),
         });
     }
     function updateCagnottes(room, cagnotte) {
-        io["in"](room).emit("updateCagnottesResponse", {
-            cagnotte: cagnotte
+        io.in(room).emit("updateCagnottesResponse", {
+            cagnotte: cagnotte,
+            // players: getAllClientsWithSameRoom(dataRoom),
         });
     }
     function updatesVotes(dataRoom) {
         var room = getTheRoom(dataRoom);
-        io["in"](dataRoom).emit("voteResponse", {
-            votes: room.votes
+        io.in(dataRoom).emit("voteResponse", {
+            votes: room.votes,
         });
     }
     function updatesInRoom(dataRoom) {
         var room = getTheRoom(dataRoom);
         socket.emit("statusGameResponse", {
-            isInGame: room.isInGame
+            isInGame: room.isInGame,
         });
     }
     socket.on("test", function (data) {
         console.log("test");
-        io["in"](data.room).emit("testResponse", {});
+        io.in(data.room).emit("testResponse", {});
         // socket.emit("testResponse", {});
     });
     socket.on("disconnect", function (data) {
@@ -167,7 +168,7 @@ io.on("connection", function (socket) {
         console.log("join room ", data.room);
         socket.join(data.room);
         socket.emit("joinRoomResponse", {
-            room: data.room
+            room: data.room,
         });
         updateRoomClient(data.room);
     });
@@ -187,13 +188,13 @@ io.on("connection", function (socket) {
             hasVoted: false,
             voteConfirmed: false,
             isController: data.controller,
-            isViewer: data.viewer
+            isViewer: data.viewer,
         };
         clients.push(newPlayer);
         socket.emit("joinNameResponse", {
             name: data.name,
             room: data.room,
-            player: newPlayer
+            player: newPlayer,
         });
         data.controller && socket.emit("joinControllerResponse", {});
         data.viewer && socket.emit("joinViewerResponse", {});
@@ -207,7 +208,7 @@ io.on("connection", function (socket) {
                 cagnotte: {
                     room: data.room,
                     traitorValue: 0,
-                    innocentValue: 0
+                    innocentValue: 0,
                 },
                 votes: [],
                 votesLaunched: false,
@@ -217,7 +218,7 @@ io.on("connection", function (socket) {
                 voiceIALaunched: false,
                 justePrixLaunched: false,
                 voiceIAVoicePlayed: false,
-                revealVoiceIAAnswer: false
+                revealVoiceIAAnswer: false,
             });
         }
         rooms.find(function (e) { return e.name == data.room; }).players.push(newPlayer);
@@ -236,7 +237,7 @@ io.on("connection", function (socket) {
     });
     socket.on("revealRole", function (data) {
         socket.emit("revealRoleResponse", {
-            viewerRevealRole: !data.viewerRevealRole
+            viewerRevealRole: !data.viewerRevealRole,
         });
     });
     socket.on("modifyCagnottes", function (data) {
@@ -245,8 +246,8 @@ io.on("connection", function (socket) {
             ? (room.cagnotte.traitorValue += data.value)
             : (room.cagnotte.innocentValue += data.value);
         updateCagnottes(data.room, room.cagnotte);
-        io["in"](data.room).emit("globalCagnoteAnimation", {
-            animationForInnocent: !data.isCagnottesTraitor
+        io.in(data.room).emit("globalCagnoteAnimation", {
+            animationForInnocent: !data.isCagnottesTraitor,
         });
     });
     socket.on("resetCagnottes", function (data) {
@@ -293,8 +294,8 @@ io.on("connection", function (socket) {
         }
     });
     socket.on("toggleGameStatus", function (data) {
-        io["in"](data.room).emit("statusGameResponse", {
-            isInGame: !data.isInGame
+        io.in(data.room).emit("statusGameResponse", {
+            isInGame: !data.isInGame,
         });
         console.log(!data.isInGame ? "🟩 now in game" : "🟥 no game");
     });
@@ -302,11 +303,11 @@ io.on("connection", function (socket) {
         console.log("✉️ votes initiate");
         var room = getTheRoom(data.room);
         room.votesLaunched = true;
-        io["in"](data.room).emit("launchVoteResponse", {
-            votesLaunched: room.votesLaunched
+        io.in(data.room).emit("launchVoteResponse", {
+            votesLaunched: room.votesLaunched,
         });
-        io["in"](data.room).emit("sendPLayersForVOtes", {
-            playersForVotes: getRealPlayers(data.room)
+        io.in(data.room).emit("sendPLayersForVOtes", {
+            playersForVotes: getRealPlayers(data.room),
         });
     });
     socket.on("stopVote", function (data) {
@@ -320,70 +321,70 @@ io.on("connection", function (socket) {
             player.voteConfirmed = false;
         });
         updatePlayers(data.room);
-        io["in"](data.room).emit("stopVoteResponse", {
-            votesLaunched: room.votesLaunched
+        io.in(data.room).emit("stopVoteResponse", {
+            votesLaunched: room.votesLaunched,
         });
-        io["in"](data.room).emit("reinitiateVoteResposne", {
+        io.in(data.room).emit("reinitiateVoteResposne", {
             hasVoted: false,
-            voteConfirmed: false
+            voteConfirmed: false,
         });
-        io["in"](data.room).emit("everyOneHaseveryOneHasConfirmedVoteResponse", {
-            everyOneHasConfirmedVote: false
+        io.in(data.room).emit("everyOneHaseveryOneHasConfirmedVoteResponse", {
+            everyOneHasConfirmedVote: false,
         });
     });
     socket.on("toggleLaunchQuestions", function (data) {
         console.log(data.questionsLaunched);
         var room = getTheRoom(data.room);
         room.questionsLaunched = !data.questionsLaunched;
-        io["in"](data.room).emit("toggleLaunchQuestionsResponse", {
-            launchedQuestions: room.questionsLaunched
+        io.in(data.room).emit("toggleLaunchQuestionsResponse", {
+            launchedQuestions: room.questionsLaunched,
         });
     });
     socket.on("toggleLauncheVoiceIa", function (data) {
         console.log("toggle voice IA");
         var room = getTheRoom(data.room);
         room.voiceIALaunched = !data.voiceIALaunched;
-        io["in"](data.room).emit("toggleLauncheVoiceIaResponse", {
-            voiceIALaunched: room.voiceIALaunched
+        io.in(data.room).emit("toggleLauncheVoiceIaResponse", {
+            voiceIALaunched: room.voiceIALaunched,
         });
     });
     socket.on("toggleVoiceIAVoicePlayed", function (data) {
         console.log("toggle play voice IA");
         var room = getTheRoom(data.room);
         room.voiceIAVoicePlayed = !data.voiceIAVoicePlayed;
-        io["in"](data.room).emit("toggleVoiceIAVoicePlayedResponse", {
-            voiceIAVoicePlayed: room.voiceIAVoicePlayed
+        io.in(data.room).emit("toggleVoiceIAVoicePlayedResponse", {
+            voiceIAVoicePlayed: room.voiceIAVoicePlayed,
         });
     });
     socket.on("selectVoiceIA", function (data) {
         console.log(data.selectedVoiceIA);
-        io["in"](data.room).emit("selectVoiceIAResponse", {
-            selectedVoiceIA: data.selectedVoiceIA
+        io.in(data.room).emit("selectVoiceIAResponse", {
+            selectedVoiceIA: data.selectedVoiceIA,
         });
         //?
-        io["in"](data.room).emit("selectVoiceIAResponseAnimation", {});
+        io.in(data.room).emit("selectVoiceIAResponseAnimation", {});
     });
     socket.on("voiceIAPanelAnimation", function (data) {
-        io["in"](data.room).emit("voiceIAPanelAnimationZoomOutResponse", {});
+        io.in(data.room).emit("voiceIAPanelAnimationZoomOutResponse", {});
     });
     socket.on("revealVoiceIAAnswer", function (data) {
         var room = getTheRoom(data.room);
         room.revealVoiceIAAnswer = data.revealVoiceIAAnswer;
-        io["in"](data.room).emit("revealVoiceIAAnswerResponse", {
-            revealVoiceIAAnswer: room.revealVoiceIAAnswer
+        io.in(data.room).emit("revealVoiceIAAnswerResponse", {
+            revealVoiceIAAnswer: room.revealVoiceIAAnswer,
         });
     });
     socket.on("answersVoiceIAAnswer", function (data) {
-        io["in"](data.room).emit("answersVoiceIAAnswerResponse", {
-            goodAnswer: data.goodAnswer
+        io.in(data.room).emit("answersVoiceIAAnswerResponse", {
+            goodAnswer: data.goodAnswer,
         });
-        io["in"](data.room).emit("answersVoiceIAAnswerResponseAnimation", {
-            goodAnswer: data.goodAnswer
+        io.in(data.room).emit("answersVoiceIAAnswerResponseAnimation", {
+            goodAnswer: data.goodAnswer,
         });
     });
     socket.on("unselectVoiceIA", function (data) {
-        io["in"](data.room).emit("unselectVoiceIAResponse", {
-            selectedVoiceIA: { voice: "", text: "", anwser: "" }
+        io.in(data.room).emit("unselectVoiceIAResponse", {
+            selectedVoiceIA: { voice: "", text: "", anwser: "" },
         });
     });
     socket.on("arrowQuestions", function (data) {
@@ -398,8 +399,8 @@ io.on("connection", function (socket) {
             : data.numberQuestion == 0
                 ? (newNumberQuestion = data.numberQuestion)
                 : (newNumberQuestion = data.numberQuestion - 1);
-        io["in"](data.room).emit("arrowQuestionsResponse", {
-            newNumberQuestion: newNumberQuestion
+        io.in(data.room).emit("arrowQuestionsResponse", {
+            newNumberQuestion: newNumberQuestion,
         });
     });
     socket.on("vote", function (data) {
@@ -421,7 +422,7 @@ io.on("connection", function (socket) {
             from_1.hasVoted = true;
             updatesVotes(data.room);
             socket.emit("hasVotedResponse", {
-                hasVoted: from_1.hasVoted
+                hasVoted: from_1.hasVoted,
             });
         }
     });
@@ -432,7 +433,7 @@ io.on("connection", function (socket) {
             voteToConfirm.confirm = true;
             updatesVotes(data.room);
             socket.emit("hasVoteConfirmedResponse", {
-                hasConfirmedVote: voteToConfirm.confirm
+                hasConfirmedVote: voteToConfirm.confirm,
             });
         }
     });
@@ -443,8 +444,8 @@ io.on("connection", function (socket) {
         // let everyOneHasVoted:boolean
         if (votes.length == players.length) {
             var everyOneHasConfirmedVote = votes.every(function (vote) { return vote.confirm === true; });
-            io["in"](data.room).emit("everyOneHaseveryOneHasConfirmedVoteResponse", {
-                everyOneHasConfirmedVote: everyOneHasConfirmedVote
+            io.in(data.room).emit("everyOneHaseveryOneHasConfirmedVoteResponse", {
+                everyOneHasConfirmedVote: everyOneHasConfirmedVote,
             });
         }
     });
@@ -456,31 +457,31 @@ io.on("connection", function (socket) {
         var numberSubWinner = mostVotedPlayer.isTraitor
             ? room.cagnotte.innocentValue
             : room.cagnotte.traitorValue;
-        io["in"](data.room).emit("demandVotesResultResponse", {
+        io.in(data.room).emit("demandVotesResultResponse", {
             mostVotedPlayer: mostVotedPlayer,
             displayVotesResult: true,
-            numberSubWinner: numberSubWinner
+            numberSubWinner: numberSubWinner,
         });
     });
     socket.on("playAudio", function (data) {
         // socket.on("playAudio", (data: { room: string; audio: HTMLAudioElement }) => {
-        io["in"](data.room).emit("playAudioResponse", {
-            audio: data.audio
+        io.in(data.room).emit("playAudioResponse", {
+            audio: data.audio,
         });
     });
     socket.on("stopAudio", function (data) {
         console.log("stop audio");
-        io["in"](data.room).emit("stopAudioResponse", {});
+        io.in(data.room).emit("stopAudioResponse", {});
     });
     socket.on("volumeAudio", function (data) {
         console.log(data.volume);
         socket.emit("volumeAudioResponse", {
-            volume: data.volume
+            volume: data.volume,
         });
     });
     socket.on("toggleRevealAnswer", function (data) {
-        io["in"](data.room).emit("toggleRevealAnswerResponse", {
-            revealAnswer: !data.revealAnswer
+        io.in(data.room).emit("toggleRevealAnswerResponse", {
+            revealAnswer: !data.revealAnswer,
         });
     });
 });

@@ -2,10 +2,11 @@
     "compilerOptions": {
         "target": "es5",
         "module": "commonjs",
-        "noEmitOnError": false
+        "noEmitOnError": false,
+        "outDir": "api"
     },
     "exclude": [
         "node_modules"
     ],
-    "include": ["api/index.ts"]
+    "include": ["index.ts"]
 }
