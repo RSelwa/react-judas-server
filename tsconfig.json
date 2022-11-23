@@ -7,5 +7,5 @@
     "exclude": [
         "node_modules"
     ],
-    "include": ["./server.ts"]
+    "include": ["index.ts"]
 }
