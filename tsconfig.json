@@ -3,7 +3,6 @@
         "target": "es5",
         "module": "commonjs",
         "noEmitOnError": false,
-        "outDir": "api"
     },
     "exclude": [
         "node_modules"

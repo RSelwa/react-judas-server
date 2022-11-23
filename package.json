@@ -2,11 +2,14 @@
   "name": "react-judas-server",
   "version": "1.0.0",
   "description": "",
-  "main": "api/index.js",
+  "main": "index.js",
+  "engines": {
+    "node": "16.x"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon server.js",
-    "dev": " concurrently \" tsc --watch \" \"nodemon server.js\""
+    "start": "nodemon index.js",
+    "dev": " concurrently \" tsc index.ts --watch \" \"nodemon index.js\""
   },
   "author": "",
   "license": "ISC",
