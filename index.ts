@@ -133,39 +133,39 @@ io.on("connection", (socket) => {
   };
 
   const removePlayer = () => {
-    const clientOnClients: Player = getClientByID(socketClientId);
-    //* if clients exists in clients
-    if (clientOnClients) {
-      //* find the room of the player
-      const roomOfPlayer: Room = getTheRoom(clientOnClients.room);
+    try {
+      const clientOnClients: Player = getClientByID(socketClientId);
+      //* if clients exists in clients
+      if (clientOnClients) {
+        //* find the room of the player
+        const roomOfPlayer: Room = getTheRoom(clientOnClients.room);
 
-      //* trouve le joueur dans room.player qui correspond à l'clientOnClients (qui est notre joueur deconnecté by id), puis le supprime de room.players
-      roomOfPlayer.players.splice(
-        roomOfPlayer.players.indexOf(
-          roomOfPlayer.players.find(
-            (player: Player) => player == clientOnClients
-          )
-        ),
-        1
-      );
-      const playerWasTraitor: boolean =
-        roomOfPlayer.traitorId == clientOnClients.idClient;
-      if (playerWasTraitor) {
-        roomOfPlayer.traitorId = "";
-      }
-      //* s'il n'y a plus de joueurs dans la room, supprime la room, faire gaffe aux viewer qui sont pas players?
-      if (roomOfPlayer.players.length <= 0) {
-        const roomInRooms: Room = rooms.find(
-          (room: Room) => room == roomOfPlayer
+        //* trouve le joueur dans room.player qui correspond à l'clientOnClients (qui est notre joueur deconnecté by id), puis le supprime de room.players
+        roomOfPlayer.players.splice(
+          roomOfPlayer.players.indexOf(
+            roomOfPlayer.players.find(
+              (player: Player) => player == clientOnClients
+            )
+          ),
+          1
         );
-        rooms.splice(rooms.indexOf(roomInRooms), 1);
+        //* s'il n'y a plus de joueurs dans la room, supprime la room, faire gaffe aux viewer qui sont pas players?
+        if (roomOfPlayer.players.length <= 0) {
+          const roomInRooms: Room = rooms.find(
+            (room: Room) => room == roomOfPlayer
+          );
+          rooms.splice(rooms.indexOf(roomInRooms), 1);
+        }
+        //*remove players from clients
+        clients.splice(clients.indexOf(clientOnClients), 1);
+        if (roomOfPlayer.players.length > 0) {
+          updateRoomClient(clientOnClients.room);
+          // updatePlayers(clientOnClients.room);
+        }
+        updateRoomClient(roomOfPlayer.id);
       }
-      //*remove players from clients
-      clients.splice(clients.indexOf(clientOnClients), 1);
-      if (roomOfPlayer.players.length > 0) {
-        updateRoomClient(clientOnClients.room);
-        // updatePlayers(clientOnClients.room);
-      }
+    } catch (error) {
+      console.error(error);
     }
   };
   function updatePlayers(room: string): void {
@@ -190,7 +190,7 @@ io.on("connection", (socket) => {
   function updatesInRoom(dataRoom: string): void {
     const room: Room = getTheRoom(dataRoom);
     socket.emit("statusGameResponse", {
-      isInGame: room.isInGame,
+      isInGame: room.isGameLaunched,
     });
   }
   //#endregion
@@ -280,7 +280,7 @@ io.on("connection", (socket) => {
         if (!rooms.find((e) => e.id == data.room)) {
           rooms.push({
             id: data.room,
-            isInGame: false,
+            isGameLaunched: false,
             players: [],
             cagnottes: [
               { name: "innocent", value: 0 },
@@ -289,7 +289,9 @@ io.on("connection", (socket) => {
             votes: [],
             votesLaunched: false,
             questionsLaunched: false,
-            traitorId: "",
+            isRevealRole: false,
+            // traitorId: "",
+
             revealAnswerQuestion: false,
             voiceIALaunched: false,
             justePrixLaunched: false,
@@ -341,9 +343,15 @@ io.on("connection", (socket) => {
 
   socket.on(
     "modifyCagnottes",
-    (data: { room: string; newValue: number; cagnotte: Cagnotte }) => {
+    (data: {
+      room: string;
+      newValue: number;
+      cagnotteName: "innocent" | "traitor";
+    }) => {
       try {
         const room: Room = getTheRoom(data.room);
+        room.cagnottes.find((c) => c.name === data.cagnotteName).value =
+          data.newValue;
         updateRoomClient(data.room);
 
         //!
@@ -357,22 +365,19 @@ io.on("connection", (socket) => {
     }
   );
 
-  socket.on(
-    "resetCagnottes",
-    (data: { room: string; isCagnottesTraitor: boolean }) => {
-      try {
-        const room: Room = getTheRoom(data.room);
-        room.cagnottes = [
-          { name: "innocent", value: 0 },
-          { name: "traitor", value: 0 },
-        ];
-        updateRoomClient(data.room);
-      } catch (error) {
-        console.error(error);
-        sendError(error, data.room);
-      }
+  socket.on("resetCagnottes", (data: { room: string }) => {
+    try {
+      const room: Room = getTheRoom(data.room);
+      room.cagnottes = [
+        { name: "innocent", value: 0 },
+        { name: "traitor", value: 0 },
+      ];
+      updateRoomClient(data.room);
+    } catch (error) {
+      console.error(error);
+      sendError(error, data.room);
     }
-  );
+  });
 
   socket.on(
     "modifyPlayerPts",
@@ -398,10 +403,10 @@ io.on("connection", (socket) => {
       if (realPlayers.length > 0) {
         const randomTraitor: Player =
           realPlayers[Math.floor(Math.random() * realPlayers.length)];
-        room.traitorId = randomTraitor.idClient;
+        // room.traitorId = randomTraitor.idClient;
         room.players.find((player) => player == randomTraitor).isTraitor = true;
       }
-      room.isInGame = true;
+      room.isGameLaunched = true;
       updateRoomClient(data.room);
     } catch (error) {
       console.error(error);
@@ -417,8 +422,8 @@ io.on("connection", (socket) => {
       );
       if (playerTraitor) {
         playerTraitor.isTraitor = false;
-        room.traitorId = "";
-        room.isInGame = false;
+        // room.traitorId = "";
+        room.isGameLaunched = false;
         updateRoomClient(data.room);
       }
     } catch (error) {

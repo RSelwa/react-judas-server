@@ -122,28 +122,30 @@ io.on("connection", function (socket) {
         });
     };
     var removePlayer = function () {
-        var clientOnClients = getClientByID(socketClientId);
-        //* if clients exists in clients
-        if (clientOnClients) {
-            //* find the room of the player
-            var roomOfPlayer_1 = getTheRoom(clientOnClients.room);
-            //* trouve le joueur dans room.player qui correspond à l'clientOnClients (qui est notre joueur deconnecté by id), puis le supprime de room.players
-            roomOfPlayer_1.players.splice(roomOfPlayer_1.players.indexOf(roomOfPlayer_1.players.find(function (player) { return player == clientOnClients; })), 1);
-            var playerWasTraitor = roomOfPlayer_1.traitorId == clientOnClients.idClient;
-            if (playerWasTraitor) {
-                roomOfPlayer_1.traitorId = "";
+        try {
+            var clientOnClients_1 = getClientByID(socketClientId);
+            //* if clients exists in clients
+            if (clientOnClients_1) {
+                //* find the room of the player
+                var roomOfPlayer_1 = getTheRoom(clientOnClients_1.room);
+                //* trouve le joueur dans room.player qui correspond à l'clientOnClients (qui est notre joueur deconnecté by id), puis le supprime de room.players
+                roomOfPlayer_1.players.splice(roomOfPlayer_1.players.indexOf(roomOfPlayer_1.players.find(function (player) { return player == clientOnClients_1; })), 1);
+                //* s'il n'y a plus de joueurs dans la room, supprime la room, faire gaffe aux viewer qui sont pas players?
+                if (roomOfPlayer_1.players.length <= 0) {
+                    var roomInRooms = rooms.find(function (room) { return room == roomOfPlayer_1; });
+                    rooms.splice(rooms.indexOf(roomInRooms), 1);
+                }
+                //*remove players from clients
+                clients.splice(clients.indexOf(clientOnClients_1), 1);
+                if (roomOfPlayer_1.players.length > 0) {
+                    updateRoomClient(clientOnClients_1.room);
+                    // updatePlayers(clientOnClients.room);
+                }
+                updateRoomClient(roomOfPlayer_1.id);
             }
-            //* s'il n'y a plus de joueurs dans la room, supprime la room, faire gaffe aux viewer qui sont pas players?
-            if (roomOfPlayer_1.players.length <= 0) {
-                var roomInRooms = rooms.find(function (room) { return room == roomOfPlayer_1; });
-                rooms.splice(rooms.indexOf(roomInRooms), 1);
-            }
-            //*remove players from clients
-            clients.splice(clients.indexOf(clientOnClients), 1);
-            if (roomOfPlayer_1.players.length > 0) {
-                updateRoomClient(clientOnClients.room);
-                // updatePlayers(clientOnClients.room);
-            }
+        }
+        catch (error) {
+            console.error(error);
         }
     };
     function updatePlayers(room) {
@@ -166,7 +168,7 @@ io.on("connection", function (socket) {
     function updatesInRoom(dataRoom) {
         var room = getTheRoom(dataRoom);
         socket.emit("statusGameResponse", {
-            isInGame: room.isInGame
+            isInGame: room.isGameLaunched
         });
     }
     //#endregion
@@ -240,7 +242,7 @@ io.on("connection", function (socket) {
             if (!rooms.find(function (e) { return e.id == data.room; })) {
                 rooms.push({
                     id: data.room,
-                    isInGame: false,
+                    isGameLaunched: false,
                     players: [],
                     cagnottes: [
                         { name: "innocent", value: 0 },
@@ -249,7 +251,8 @@ io.on("connection", function (socket) {
                     votes: [],
                     votesLaunched: false,
                     questionsLaunched: false,
-                    traitorId: "",
+                    isRevealRole: false,
+                    // traitorId: "",
                     revealAnswerQuestion: false,
                     voiceIALaunched: false,
                     justePrixLaunched: false,
@@ -294,6 +297,8 @@ io.on("connection", function (socket) {
     socket.on("modifyCagnottes", function (data) {
         try {
             var room = getTheRoom(data.room);
+            room.cagnottes.find(function (c) { return c.name === data.cagnotteName; }).value =
+                data.newValue;
             updateRoomClient(data.room);
             //!
             // io.in(data.room).emit("globalCagnoteAnimation", {
@@ -336,10 +341,10 @@ io.on("connection", function (socket) {
             var realPlayers = getRealPlayers(data.room);
             if (realPlayers.length > 0) {
                 var randomTraitor_1 = realPlayers[Math.floor(Math.random() * realPlayers.length)];
-                room.traitorId = randomTraitor_1.idClient;
+                // room.traitorId = randomTraitor.idClient;
                 room.players.find(function (player) { return player == randomTraitor_1; }).isTraitor = true;
             }
-            room.isInGame = true;
+            room.isGameLaunched = true;
             updateRoomClient(data.room);
         }
         catch (error) {
@@ -353,8 +358,8 @@ io.on("connection", function (socket) {
             var playerTraitor = room.players.find(function (player) { return player.isTraitor == true; });
             if (playerTraitor) {
                 playerTraitor.isTraitor = false;
-                room.traitorId = "";
-                room.isInGame = false;
+                // room.traitorId = "";
+                room.isGameLaunched = false;
                 updateRoomClient(data.room);
             }
         }

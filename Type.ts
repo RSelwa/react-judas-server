@@ -19,10 +19,12 @@ export type Cagnotte = {
 };
 export type Room = {
   id: string;
-  isInGame: boolean;
   players: Player[];
   cagnottes: Cagnotte[];
   votes: Vote[];
+  isGameLaunched: boolean;
+  // traitorId: string;
+  isRevealRole: boolean;
   votesLaunched: boolean;
   questionsLaunched: boolean;
   voiceIALaunched: boolean;
@@ -30,7 +32,6 @@ export type Room = {
   justePrixLaunched: boolean;
   revealAnswerQuestion: boolean;
   revealVoiceIAAnswer: boolean;
-  traitorId: string;
 };
 export type Vote = {
   from: Player;
