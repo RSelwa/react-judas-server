@@ -10,7 +10,9 @@ const options = {
       "http://192.168.1.23:8080",
       "http://localhost:3000",
       "http://localhost:3001",
+      "http://localhost:5173",
       "http://192.168.1.23:3000",
+      "*",
     ],
     methods: ["GET", "POST"],
   },
@@ -232,8 +234,6 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", (data: any) => {
-    console.log(data);
-
     console.log("🔴 user disconnect");
     removePlayer();
   });
@@ -261,7 +261,6 @@ io.on("connection", (socket) => {
       controller: boolean;
       viewer: boolean;
     }) => {
-      console.log(clients);
       if (clients.some((client) => client.idClient === data.idClient)) {
         return;
       }

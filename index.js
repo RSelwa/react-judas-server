@@ -10,7 +10,9 @@ var options = {
             "http://192.168.1.23:8080",
             "http://localhost:3000",
             "http://localhost:3001",
+            "http://localhost:5173",
             "http://192.168.1.23:3000",
+            "*",
         ],
         methods: ["GET", "POST"]
     }
@@ -157,7 +159,6 @@ io.on("connection", function (socket) {
         // socket.emit("testResponse", {});
     });
     socket.on("disconnect", function (data) {
-        console.log(data);
         console.log("🔴 user disconnect");
         removePlayer();
     });
@@ -174,7 +175,6 @@ io.on("connection", function (socket) {
         updateRoomClient(data.room);
     });
     socket.on("joinName", function (data) {
-        console.log(clients);
         if (clients.some(function (client) { return client.idClient === data.idClient; })) {
             return;
         }
