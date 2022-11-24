@@ -13,15 +13,15 @@ export type Player = {
   isViewer: boolean;
 };
 export type Cagnotte = {
-  room: string;
-  traitorValue: number;
-  innocentValue: number;
+  name: "innocent" | "traitor";
+
+  value: number;
 };
 export type Room = {
   id: string;
   isInGame: boolean;
   players: Player[];
-  cagnotte: Cagnotte;
+  cagnottes: Cagnotte[];
   votes: Vote[];
   votesLaunched: boolean;
   questionsLaunched: boolean;

@@ -242,11 +242,10 @@ io.on("connection", function (socket) {
                     id: data.room,
                     isInGame: false,
                     players: [],
-                    cagnotte: {
-                        room: data.room,
-                        traitorValue: 0,
-                        innocentValue: 0
-                    },
+                    cagnottes: [
+                        { name: "innocent", value: 0 },
+                        { name: "traitor", value: 0 },
+                    ],
                     votes: [],
                     votesLaunched: false,
                     questionsLaunched: false,
@@ -295,13 +294,11 @@ io.on("connection", function (socket) {
     socket.on("modifyCagnottes", function (data) {
         try {
             var room = getTheRoom(data.room);
-            data.isCagnottesTraitor
-                ? (room.cagnotte.traitorValue += data.value)
-                : (room.cagnotte.innocentValue += data.value);
-            updateCagnottes(data.room, room.cagnotte);
-            io["in"](data.room).emit("globalCagnoteAnimation", {
-                animationForInnocent: !data.isCagnottesTraitor
-            });
+            updateRoomClient(data.room);
+            //!
+            // io.in(data.room).emit("globalCagnoteAnimation", {
+            //   animationForInnocent: !data.isCagnottesTraitor,
+            // });
         }
         catch (error) {
             console.error(error);
@@ -311,11 +308,11 @@ io.on("connection", function (socket) {
     socket.on("resetCagnottes", function (data) {
         try {
             var room = getTheRoom(data.room);
-            console.log(room.cagnotte);
-            data.isCagnottesTraitor
-                ? (room.cagnotte.traitorValue = 0)
-                : (room.cagnotte.innocentValue = 0);
-            updateCagnottes(data.room, room.cagnotte);
+            room.cagnottes = [
+                { name: "innocent", value: 0 },
+                { name: "traitor", value: 0 },
+            ];
+            updateRoomClient(data.room);
         }
         catch (error) {
             console.error(error);
@@ -619,8 +616,8 @@ io.on("connection", function (socket) {
             var votesTo = votes.map(function (vote) { return vote.to; });
             var mostVotedPlayer = getMostVotedPlayer(data.room);
             var numberSubWinner = mostVotedPlayer.isTraitor
-                ? room.cagnotte.innocentValue
-                : room.cagnotte.traitorValue;
+                ? room.cagnottes.find(function (cagnotte) { return cagnotte.name === "innocent"; }).value
+                : room.cagnottes.find(function (cagnotte) { return cagnotte.name === "traitor"; }).value;
             io["in"](data.room).emit("demandVotesResultResponse", {
                 mostVotedPlayer: mostVotedPlayer,
                 displayVotesResult: true,

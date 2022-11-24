@@ -282,11 +282,10 @@ io.on("connection", (socket) => {
             id: data.room,
             isInGame: false,
             players: [],
-            cagnotte: {
-              room: data.room,
-              traitorValue: 0,
-              innocentValue: 0,
-            },
+            cagnottes: [
+              { name: "innocent", value: 0 },
+              { name: "traitor", value: 0 },
+            ],
             votes: [],
             votesLaunched: false,
             questionsLaunched: false,
@@ -342,16 +341,15 @@ io.on("connection", (socket) => {
 
   socket.on(
     "modifyCagnottes",
-    (data: { room: string; value: number; isCagnottesTraitor: boolean }) => {
+    (data: { room: string; newValue: number; cagnotte: Cagnotte }) => {
       try {
         const room: Room = getTheRoom(data.room);
-        data.isCagnottesTraitor
-          ? (room.cagnotte.traitorValue += data.value)
-          : (room.cagnotte.innocentValue += data.value);
-        updateCagnottes(data.room, room.cagnotte);
-        io.in(data.room).emit("globalCagnoteAnimation", {
-          animationForInnocent: !data.isCagnottesTraitor,
-        });
+        updateRoomClient(data.room);
+
+        //!
+        // io.in(data.room).emit("globalCagnoteAnimation", {
+        //   animationForInnocent: !data.isCagnottesTraitor,
+        // });
       } catch (error) {
         console.error(error);
         sendError(error, data.room);
@@ -364,11 +362,11 @@ io.on("connection", (socket) => {
     (data: { room: string; isCagnottesTraitor: boolean }) => {
       try {
         const room: Room = getTheRoom(data.room);
-        console.log(room.cagnotte);
-        data.isCagnottesTraitor
-          ? (room.cagnotte.traitorValue = 0)
-          : (room.cagnotte.innocentValue = 0);
-        updateCagnottes(data.room, room.cagnotte);
+        room.cagnottes = [
+          { name: "innocent", value: 0 },
+          { name: "traitor", value: 0 },
+        ];
+        updateRoomClient(data.room);
       } catch (error) {
         console.error(error);
         sendError(error, data.room);
@@ -719,8 +717,8 @@ io.on("connection", (socket) => {
       const votesTo: Player[] = votes.map((vote: Vote) => vote.to);
       const mostVotedPlayer: Player = getMostVotedPlayer(data.room);
       const numberSubWinner: number = mostVotedPlayer.isTraitor
-        ? room.cagnotte.innocentValue
-        : room.cagnotte.traitorValue;
+        ? room.cagnottes.find((cagnotte) => cagnotte.name === "innocent").value
+        : room.cagnottes.find((cagnotte) => cagnotte.name === "traitor").value;
       io.in(data.room).emit("demandVotesResultResponse", {
         mostVotedPlayer: mostVotedPlayer,
         displayVotesResult: true,
