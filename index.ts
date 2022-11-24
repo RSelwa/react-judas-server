@@ -42,7 +42,7 @@ export function getPlayerByIdClient(idClient: string, room: string): Player {
   return player;
 }
 export function getTheRoom(dataRoom: string): Room {
-  return rooms.find((e) => e.name == dataRoom);
+  return rooms.find((e) => e.id == dataRoom);
 }
 export function getRealPlayers(dataRoom: string): Player[] {
   const room: Room = getTheRoom(dataRoom);
@@ -195,10 +195,10 @@ io.on("connection", (socket) => {
   }
   //#endregion
 
-  socket.on("test", (data: { room: string }) => {
+  socket.on("test", (data: { room: string; mes: string }) => {
     try {
       console.log("test");
-      sendError("test Error Message", data.room);
+      sendError(data.mes, data.room);
       io.in(data.room).emit("testResponse", {});
       // socket.emit("testResponse", {});
     } catch (error) {
@@ -233,7 +233,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on(
-    "joinName",
+    "createPlayer",
     (data: {
       room: string;
       name: string;
@@ -277,9 +277,9 @@ io.on("connection", (socket) => {
           socket.emit("joinPlayerResponse", {});
 
         //# initiate the room if doesn't exist yet
-        if (rooms.find((e) => e.name == data.room) == undefined) {
+        if (rooms.find((e) => e.id == data.room) == undefined) {
           rooms.push({
-            name: data.room,
+            id: data.name,
             isInGame: false,
             players: [],
             cagnotte: {
@@ -298,7 +298,7 @@ io.on("connection", (socket) => {
             revealVoiceIAAnswer: false,
           });
         }
-        rooms.find((e) => e.name == data.room).players.push(newPlayer);
+        rooms.find((e) => e.id == data.room).players.push(newPlayer);
         updateRoomClient(data.room);
       } catch (error) {
         console.error(error);
@@ -378,19 +378,24 @@ io.on("connection", (socket) => {
 
   socket.on(
     "modifyPlayerPts",
-    (data: { room: string; playerId: string; newValue: number }) => {
+    (data: { room: string; player: Player; newValue: number }) => {
       try {
-        const playerIndex = clients.findIndex(
-          (e) => e.idServer == data.playerId
-        );
-        if (clients[playerIndex]) {
-          if (clients[playerIndex].pts == 0 && data.newValue == -1) {
-            clients[playerIndex].pts = clients[playerIndex].pts;
-          } else {
-            clients[playerIndex].pts = clients[playerIndex].pts + data.newValue;
-          }
-        }
-        updatePlayers(data.room);
+        const room: Room = getTheRoom(data.room);
+        // const playerIndex = clients.findIndex(
+        //   (e) => e.idServer == data.playerId
+        // );
+        // if (clients[playerIndex]) {
+        //   if (clients[playerIndex].pts == 0 && data.newValue == -1) {
+        //     clients[playerIndex].pts = clients[playerIndex].pts;
+        //   } else {
+        //     clients[playerIndex].pts = clients[playerIndex].pts + data.newValue;
+        //   }
+        // }
+        // updatePlayers(data.room);
+        room.players.find(
+          (player) => player.idClient === data.player.idClient
+        ).pts = data.newValue;
+        updateRoomClient(data.room);
       } catch (error) {
         console.error(error);
         sendError(error, data.room);
@@ -398,7 +403,6 @@ io.on("connection", (socket) => {
     }
   );
 
-  //# start game
   socket.on("startGame", (data: { room: string }) => {
     try {
       const room: Room = getTheRoom(data.room);
@@ -417,7 +421,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  //# stop game
   socket.on("stopGame", (data: { room: string }) => {
     try {
       const room: Room = getTheRoom(data.room);

@@ -18,7 +18,7 @@ export type Cagnotte = {
   innocentValue: number;
 };
 export type Room = {
-  name: string;
+  id: string;
   isInGame: boolean;
   players: Player[];
   cagnotte: Cagnotte;
