@@ -277,9 +277,9 @@ io.on("connection", (socket) => {
           socket.emit("joinPlayerResponse", {});
 
         //# initiate the room if doesn't exist yet
-        if (rooms.find((e) => e.id == data.room) == undefined) {
+        if (!rooms.find((e) => e.id == data.room)) {
           rooms.push({
-            id: data.name,
+            id: data.room,
             isInGame: false,
             players: [],
             cagnotte: {
@@ -381,17 +381,7 @@ io.on("connection", (socket) => {
     (data: { room: string; player: Player; newValue: number }) => {
       try {
         const room: Room = getTheRoom(data.room);
-        // const playerIndex = clients.findIndex(
-        //   (e) => e.idServer == data.playerId
-        // );
-        // if (clients[playerIndex]) {
-        //   if (clients[playerIndex].pts == 0 && data.newValue == -1) {
-        //     clients[playerIndex].pts = clients[playerIndex].pts;
-        //   } else {
-        //     clients[playerIndex].pts = clients[playerIndex].pts + data.newValue;
-        //   }
-        // }
-        // updatePlayers(data.room);
+
         room.players.find(
           (player) => player.idClient === data.player.idClient
         ).pts = data.newValue;
