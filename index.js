@@ -219,8 +219,11 @@ io.on("connection", function (socket) {
                 ptsCagnotte: 0,
                 hasVoted: false,
                 voteConfirmed: false,
-                isController: data.controller,
-                isViewer: data.viewer
+                //! name == "c" for easy debug
+                // isController:  data.controller,
+                isController: data.name === "c" || data.controller,
+                //! name == "v" for easy debug
+                isViewer: data.name === "v" || data.viewer
             };
             clients.push(newPlayer);
             socket.emit("joinNameResponse", {
