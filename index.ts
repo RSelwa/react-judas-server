@@ -1,3 +1,6 @@
+import { Cagnotte, Player, Room, VoiceIA, Vote } from "./Type";
+
+//#region socket
 const PORT = process.env.port || 6602;
 const options = {
   cors: {
@@ -25,71 +28,23 @@ const axios = require("axios");
 app.get("/", (req, res) => {
   res.send("Hello World! I'm a react server");
 });
-type VoiceIA = { voice: string; text: string; answer: string };
-type Player = {
-  idServer?: string;
-  idClient?: string;
-  room: string;
-  name: string;
-  pts: number;
-  isTraitor: boolean;
-  ptsCagnotte: number;
-  hasVoted: boolean;
-  voteConfirmed: boolean;
-  isController: boolean;
-  isViewer: boolean;
-};
-type Cagnotte = {
-  room: string;
-  traitorValue: number;
-  innocentValue: number;
-};
-type Room = {
-  name: string;
-  isInGame: boolean;
-  players: Player[];
-  cagnotte: Cagnotte;
-  votes: Vote[];
-  votesLaunched: boolean;
-  questionsLaunched: boolean;
-  voiceIALaunched: boolean;
-  voiceIAVoicePlayed: boolean;
-  justePrixLaunched: boolean;
-  revealAnswerQuestion: boolean;
-  revealVoiceIAAnswer: boolean;
-  traitorId: string;
-};
-type Vote = {
-  from: Player;
-  to: Player;
-  confirm: boolean;
-};
-type Question = {
-  _id: string;
-  question: string;
-  response: string;
-  numberOfSubs: number;
-  __v: number;
-};
-let clients: Player[] = [];
-let rooms: Room[] = [];
-// const urlAxios: string = `https://server-questions-judas.r-selwa.space/api/questionItems/`;
+//#endregion
 
-function getClientByID(clientId: string): Player {
+export function getClientByID(clientId: string): Player {
   //* get the id of the client in all the clients
   const client: Player = clients.find((client) => client.idServer == clientId);
   return client;
   //   return clientId;
 }
-function getPlayerByIdClient(idClient: string, room: string): Player {
+export function getPlayerByIdClient(idClient: string, room: string): Player {
   const players: Player[] = getTheRoom(room).players;
   const player = players.find((player: Player) => player.idClient == idClient);
   return player;
 }
-function getTheRoom(dataRoom: string): Room {
+export function getTheRoom(dataRoom: string): Room {
   return rooms.find((e) => e.name == dataRoom);
 }
-function getRealPlayers(dataRoom: string): Player[] {
+export function getRealPlayers(dataRoom: string): Player[] {
   const room: Room = getTheRoom(dataRoom);
   if (room) {
     return room.players.filter(
@@ -98,7 +53,7 @@ function getRealPlayers(dataRoom: string): Player[] {
   }
 }
 
-function findOcc(arr: any[], key: string) {
+export function findOcc(arr: any[], key: string) {
   let arr2: any[] = [];
 
   arr.forEach((x) => {
@@ -128,7 +83,7 @@ function findOcc(arr: any[], key: string) {
 
   return arr2;
 }
-function getMostVotedPlayer(dataRoom: string): Player {
+export function getMostVotedPlayer(dataRoom: string): Player {
   //# si c'est 1 partout faire en sorte que le traitre ne soit pas designé comme le mostVoted, ici c'est le dernier player qui a été voté soit le last dans room.votes
   const selectInnocent: boolean = true;
   const room = getTheRoom(dataRoom);
@@ -157,14 +112,26 @@ function getMostVotedPlayer(dataRoom: string): Player {
   return mostVotedPlayer;
 }
 
+let clients: Player[] = [];
+let rooms: Room[] = [];
+
 io.on("connection", (socket) => {
   const socketClientId = socket.client.id;
   console.log("🟢 new connection", socketClientId);
+
+  //#region Functions
+  const sendError = (errorMessage: string, roomId: string) => {
+    io.in(roomId).emit("error", {
+      message: errorMessage,
+    });
+  };
+
   const updateRoomClient = (roomId: string) => {
     io.in(roomId).emit("updateRoom", {
       room: getTheRoom(roomId),
     });
   };
+
   const removePlayer = () => {
     const clientOnClients: Player = getClientByID(socketClientId);
     //* if clients exists in clients
@@ -226,11 +193,18 @@ io.on("connection", (socket) => {
       isInGame: room.isInGame,
     });
   }
+  //#endregion
 
   socket.on("test", (data: { room: string }) => {
-    console.log("test");
-    io.in(data.room).emit("testResponse", {});
-    // socket.emit("testResponse", {});
+    try {
+      console.log("test");
+      sendError("test Error Message", data.room);
+      io.in(data.room).emit("testResponse", {});
+      // socket.emit("testResponse", {});
+    } catch (error) {
+      console.error(error);
+      sendError(error, data.room);
+    }
   });
 
   socket.on("disconnect", (data: any) => {
@@ -244,14 +218,20 @@ io.on("connection", (socket) => {
   });
 
   socket.on("joinRoom", (data: { room: string }) => {
-    console.log("join room ", data.room);
+    try {
+      console.log("join room ", data.room);
 
-    socket.join(data.room);
-    socket.emit("joinRoomResponse", {
-      room: data.room,
-    });
-    updateRoomClient(data.room);
+      socket.join(data.room);
+      socket.emit("joinRoomResponse", {
+        room: data.room,
+      });
+      updateRoomClient(data.room);
+    } catch (error) {
+      console.error(error);
+      sendError(error, data.room);
+    }
   });
+
   socket.on(
     "joinName",
     (data: {
@@ -261,258 +241,374 @@ io.on("connection", (socket) => {
       controller: boolean;
       viewer: boolean;
     }) => {
-      if (clients.some((client) => client.idClient === data.idClient)) {
-        return;
-      }
+      try {
+        if (clients.some((client) => client.idClient === data.idClient)) {
+          return;
+        }
 
-      const newPlayer: Player = {
-        idServer: socketClientId,
-        idClient: data.idClient,
-        room: data.room,
-        name: data.name,
-        pts: 0,
-        isTraitor: false,
-        ptsCagnotte: 0,
-        hasVoted: false,
-        voteConfirmed: false,
-        isController: data.controller,
-        isViewer: data.viewer,
-      };
-      clients.push(newPlayer);
-      socket.emit("joinNameResponse", {
-        name: data.name,
-        room: data.room,
-        player: newPlayer,
-      });
-      data.controller && socket.emit("joinControllerResponse", {});
-      data.viewer && socket.emit("joinViewerResponse", {});
-      !data.controller && !data.viewer && socket.emit("joinPlayerResponse", {});
-
-      //# initiate the room if doesn't exist yet
-      if (rooms.find((e) => e.name == data.room) == undefined) {
-        rooms.push({
-          name: data.room,
-          isInGame: false,
-          players: [],
-          cagnotte: {
-            room: data.room,
-            traitorValue: 0,
-            innocentValue: 0,
-          },
-          votes: [],
-          votesLaunched: false,
-          questionsLaunched: false,
-          traitorId: "",
-          revealAnswerQuestion: false,
-          voiceIALaunched: false,
-          justePrixLaunched: false,
-          voiceIAVoicePlayed: false,
-          revealVoiceIAAnswer: false,
+        const newPlayer: Player = {
+          idServer: socketClientId,
+          idClient: data.idClient,
+          room: data.room,
+          name: data.name,
+          pts: 0,
+          isTraitor: false,
+          ptsCagnotte: 0,
+          hasVoted: false,
+          voteConfirmed: false,
+          isController: data.controller,
+          isViewer: data.viewer,
+        };
+        clients.push(newPlayer);
+        socket.emit("joinNameResponse", {
+          name: data.name,
+          room: data.room,
+          player: newPlayer,
         });
+        data.controller && socket.emit("joinControllerResponse", {});
+        data.viewer && socket.emit("joinViewerResponse", {});
+        !data.controller &&
+          !data.viewer &&
+          socket.emit("joinPlayerResponse", {});
+
+        //# initiate the room if doesn't exist yet
+        if (rooms.find((e) => e.name == data.room) == undefined) {
+          rooms.push({
+            name: data.room,
+            isInGame: false,
+            players: [],
+            cagnotte: {
+              room: data.room,
+              traitorValue: 0,
+              innocentValue: 0,
+            },
+            votes: [],
+            votesLaunched: false,
+            questionsLaunched: false,
+            traitorId: "",
+            revealAnswerQuestion: false,
+            voiceIALaunched: false,
+            justePrixLaunched: false,
+            voiceIAVoicePlayed: false,
+            revealVoiceIAAnswer: false,
+          });
+        }
+        rooms.find((e) => e.name == data.room).players.push(newPlayer);
+        updateRoomClient(data.room);
+      } catch (error) {
+        console.error(error);
+        sendError(error, data.room);
       }
-      rooms.find((e) => e.name == data.room).players.push(newPlayer);
-      updateRoomClient(data.room);
     }
   );
   socket.on("fetchRoom", (data: { room: string }) => {
-    console.log(getTheRoom(data.room));
-    console.log(socket.client.id);
+    try {
+      //! check if player is coming directely from link to game
+      if (
+        !getTheRoom(data.room) ||
+        !getTheRoom(data.room)!.players.some(
+          (player) => player.idServer === socket.client.id
+        )
+      ) {
+        console.log("redirect to lobby or to main menu");
+        socket.emit("redirectToMain", {});
+      }
 
-    //! check if player is coming directely from link to game
-    if (
-      !getTheRoom(data.room) ||
-      !getTheRoom(data.room)!.players.some(
-        (player) => player.idServer === socket.client.id
-      )
-    ) {
-      console.log("redirect to lobby or to main menu");
-      socket.emit("redirectToMain", {});
+      updateRoomClient(data.room);
+    } catch (error) {
+      console.error(error);
+      sendError(error, data.room);
     }
+  });
 
-    updateRoomClient(data.room);
-  });
-  socket.on("revealRole", (data: { viewerRevealRole: boolean }) => {
-    socket.emit("revealRoleResponse", {
-      viewerRevealRole: !data.viewerRevealRole,
-    });
-  });
+  socket.on(
+    "revealRole",
+    (data: { room: string; viewerRevealRole: boolean }) => {
+      try {
+        io.in(data.room).emit("revealRoleResponse", {
+          viewerRevealRole: !data.viewerRevealRole,
+        });
+      } catch (error) {
+        console.error(error);
+        sendError(error, data.room);
+      }
+    }
+  );
+
   socket.on(
     "modifyCagnottes",
     (data: { room: string; value: number; isCagnottesTraitor: boolean }) => {
-      const room: Room = getTheRoom(data.room);
-      data.isCagnottesTraitor
-        ? (room.cagnotte.traitorValue += data.value)
-        : (room.cagnotte.innocentValue += data.value);
-      updateCagnottes(data.room, room.cagnotte);
-      io.in(data.room).emit("globalCagnoteAnimation", {
-        animationForInnocent: !data.isCagnottesTraitor,
-      });
+      try {
+        const room: Room = getTheRoom(data.room);
+        data.isCagnottesTraitor
+          ? (room.cagnotte.traitorValue += data.value)
+          : (room.cagnotte.innocentValue += data.value);
+        updateCagnottes(data.room, room.cagnotte);
+        io.in(data.room).emit("globalCagnoteAnimation", {
+          animationForInnocent: !data.isCagnottesTraitor,
+        });
+      } catch (error) {
+        console.error(error);
+        sendError(error, data.room);
+      }
     }
   );
+
   socket.on(
     "resetCagnottes",
     (data: { room: string; isCagnottesTraitor: boolean }) => {
-      const room: Room = getTheRoom(data.room);
-      console.log(room.cagnotte);
-      data.isCagnottesTraitor
-        ? (room.cagnotte.traitorValue = 0)
-        : (room.cagnotte.innocentValue = 0);
-      updateCagnottes(data.room, room.cagnotte);
+      try {
+        const room: Room = getTheRoom(data.room);
+        console.log(room.cagnotte);
+        data.isCagnottesTraitor
+          ? (room.cagnotte.traitorValue = 0)
+          : (room.cagnotte.innocentValue = 0);
+        updateCagnottes(data.room, room.cagnotte);
+      } catch (error) {
+        console.error(error);
+        sendError(error, data.room);
+      }
     }
   );
+
   socket.on(
     "modifyPlayerPts",
     (data: { room: string; playerId: string; newValue: number }) => {
-      const playerIndex = clients.findIndex((e) => e.idServer == data.playerId);
-      if (clients[playerIndex]) {
-        if (clients[playerIndex].pts == 0 && data.newValue == -1) {
-          clients[playerIndex].pts = clients[playerIndex].pts;
-        } else {
-          clients[playerIndex].pts = clients[playerIndex].pts + data.newValue;
+      try {
+        const playerIndex = clients.findIndex(
+          (e) => e.idServer == data.playerId
+        );
+        if (clients[playerIndex]) {
+          if (clients[playerIndex].pts == 0 && data.newValue == -1) {
+            clients[playerIndex].pts = clients[playerIndex].pts;
+          } else {
+            clients[playerIndex].pts = clients[playerIndex].pts + data.newValue;
+          }
         }
+        updatePlayers(data.room);
+      } catch (error) {
+        console.error(error);
+        sendError(error, data.room);
       }
-      updatePlayers(data.room);
     }
   );
+
   //# start game
   socket.on("startGame", (data: { room: string }) => {
-    const room: Room = getTheRoom(data.room);
-    const realPlayers: Player[] = getRealPlayers(data.room);
-    if (realPlayers.length > 0) {
-      const randomTraitor: Player =
-        realPlayers[Math.floor(Math.random() * realPlayers.length)];
-      room.traitorId = randomTraitor.idClient;
-      room.players.find((player) => player == randomTraitor).isTraitor = true;
+    try {
+      const room: Room = getTheRoom(data.room);
+      const realPlayers: Player[] = getRealPlayers(data.room);
+      if (realPlayers.length > 0) {
+        const randomTraitor: Player =
+          realPlayers[Math.floor(Math.random() * realPlayers.length)];
+        room.traitorId = randomTraitor.idClient;
+        room.players.find((player) => player == randomTraitor).isTraitor = true;
+      }
+      room.isInGame = true;
+      updateRoomClient(data.room);
+    } catch (error) {
+      console.error(error);
+      sendError(error, data.room);
     }
-    room.isInGame = true;
-    updateRoomClient(data.room);
   });
+
   //# stop game
   socket.on("stopGame", (data: { room: string }) => {
-    const room: Room = getTheRoom(data.room);
-    const playerTraitor: Player = room.players.find(
-      (player: Player) => player.isTraitor == true
-    );
-    if (playerTraitor) {
-      playerTraitor.isTraitor = false;
-      room.traitorId = "";
-      room.isInGame = false;
-      updateRoomClient(data.room);
+    try {
+      const room: Room = getTheRoom(data.room);
+      const playerTraitor: Player = room.players.find(
+        (player: Player) => player.isTraitor == true
+      );
+      if (playerTraitor) {
+        playerTraitor.isTraitor = false;
+        room.traitorId = "";
+        room.isInGame = false;
+        updateRoomClient(data.room);
+      }
+    } catch (error) {
+      console.error(error);
+      sendError(error, data.room);
     }
   });
+
   socket.on("toggleGameStatus", (data: { room: string; isInGame: boolean }) => {
-    io.in(data.room).emit("statusGameResponse", {
-      isInGame: !data.isInGame,
-    });
-    console.log(!data.isInGame ? "🟩 now in game" : "🟥 no game");
+    try {
+      io.in(data.room).emit("statusGameResponse", {
+        isInGame: !data.isInGame,
+      });
+      console.log(!data.isInGame ? "🟩 now in game" : "🟥 no game");
+    } catch (error) {
+      console.error(error);
+      sendError(error, data.room);
+    }
   });
+
   socket.on("launchVote", (data: { room: string }) => {
-    console.log("✉️ votes initiate");
-    const room: Room = getTheRoom(data.room);
-    room.votesLaunched = true;
-    io.in(data.room).emit("launchVoteResponse", {
-      votesLaunched: room.votesLaunched,
-    });
-    io.in(data.room).emit("sendPLayersForVOtes", {
-      playersForVotes: getRealPlayers(data.room),
-    });
+    try {
+      console.log("✉️ votes initiate");
+      const room: Room = getTheRoom(data.room);
+      room.votesLaunched = true;
+      io.in(data.room).emit("launchVoteResponse", {
+        votesLaunched: room.votesLaunched,
+      });
+      io.in(data.room).emit("sendPLayersForVOtes", {
+        playersForVotes: getRealPlayers(data.room),
+      });
+    } catch (error) {
+      console.error(error);
+      sendError(error, data.room);
+    }
   });
+
   socket.on("stopVote", (data: { room: string }) => {
-    console.log("❌ votes stop");
-    const room: Room = getTheRoom(data.room);
-    room.votesLaunched = false;
-    room.votes = [];
-    updatesVotes(data.room);
-    room.players.forEach((player: Player) => {
-      player.hasVoted = false;
-      player.voteConfirmed = false;
-    });
-    updatePlayers(data.room);
-    io.in(data.room).emit("stopVoteResponse", {
-      votesLaunched: room.votesLaunched,
-    });
-    io.in(data.room).emit("reinitiateVoteResposne", {
-      hasVoted: false,
-      voteConfirmed: false,
-    });
-    io.in(data.room).emit("everyOneHaseveryOneHasConfirmedVoteResponse", {
-      everyOneHasConfirmedVote: false,
-    });
+    try {
+      console.log("❌ votes stop");
+      const room: Room = getTheRoom(data.room);
+      room.votesLaunched = false;
+      room.votes = [];
+      updatesVotes(data.room);
+      room.players.forEach((player: Player) => {
+        player.hasVoted = false;
+        player.voteConfirmed = false;
+      });
+      updatePlayers(data.room);
+      io.in(data.room).emit("stopVoteResponse", {
+        votesLaunched: room.votesLaunched,
+      });
+      io.in(data.room).emit("reinitiateVoteResposne", {
+        hasVoted: false,
+        voteConfirmed: false,
+      });
+      io.in(data.room).emit("everyOneHaseveryOneHasConfirmedVoteResponse", {
+        everyOneHasConfirmedVote: false,
+      });
+    } catch (error) {
+      console.error(error);
+      sendError(error, data.room);
+    }
   });
+
   socket.on(
     "toggleLaunchQuestions",
     (data: { room: string; questionsLaunched: boolean }) => {
-      console.log(data.questionsLaunched);
-      const room: Room = getTheRoom(data.room);
-      room.questionsLaunched = !data.questionsLaunched;
-      io.in(data.room).emit("toggleLaunchQuestionsResponse", {
-        launchedQuestions: room.questionsLaunched,
-      });
+      try {
+        console.log(data.questionsLaunched);
+        const room: Room = getTheRoom(data.room);
+        room.questionsLaunched = !data.questionsLaunched;
+        io.in(data.room).emit("toggleLaunchQuestionsResponse", {
+          launchedQuestions: room.questionsLaunched,
+        });
+      } catch (error) {
+        console.error(error);
+        sendError(error, data.room);
+      }
     }
   );
+
   socket.on(
     "toggleLauncheVoiceIa",
     (data: { room: string; voiceIALaunched: boolean }) => {
-      console.log("toggle voice IA");
-      const room: Room = getTheRoom(data.room);
-      room.voiceIALaunched = !data.voiceIALaunched;
-      io.in(data.room).emit("toggleLauncheVoiceIaResponse", {
-        voiceIALaunched: room.voiceIALaunched,
-      });
+      try {
+        console.log("toggle voice IA");
+        const room: Room = getTheRoom(data.room);
+        room.voiceIALaunched = !data.voiceIALaunched;
+        io.in(data.room).emit("toggleLauncheVoiceIaResponse", {
+          voiceIALaunched: room.voiceIALaunched,
+        });
+      } catch (error) {
+        console.error(error);
+        sendError(error, data.room);
+      }
     }
   );
+
   socket.on(
     "toggleVoiceIAVoicePlayed",
     (data: { room: string; voiceIAVoicePlayed: boolean }) => {
-      console.log("toggle play voice IA");
-      const room: Room = getTheRoom(data.room);
-      room.voiceIAVoicePlayed = !data.voiceIAVoicePlayed;
-      io.in(data.room).emit("toggleVoiceIAVoicePlayedResponse", {
-        voiceIAVoicePlayed: room.voiceIAVoicePlayed,
-      });
+      try {
+        console.log("toggle play voice IA");
+        const room: Room = getTheRoom(data.room);
+        room.voiceIAVoicePlayed = !data.voiceIAVoicePlayed;
+        io.in(data.room).emit("toggleVoiceIAVoicePlayedResponse", {
+          voiceIAVoicePlayed: room.voiceIAVoicePlayed,
+        });
+      } catch (error) {
+        console.error(error);
+        sendError(error, data.room);
+      }
     }
   );
+
   socket.on(
     "selectVoiceIA",
     (data: { room: string; selectedVoiceIA: VoiceIA }) => {
-      console.log(data.selectedVoiceIA);
-      io.in(data.room).emit("selectVoiceIAResponse", {
-        selectedVoiceIA: data.selectedVoiceIA,
-      });
-      //?
-      io.in(data.room).emit("selectVoiceIAResponseAnimation", {});
+      try {
+        console.log(data.selectedVoiceIA);
+        io.in(data.room).emit("selectVoiceIAResponse", {
+          selectedVoiceIA: data.selectedVoiceIA,
+        });
+        //?
+        io.in(data.room).emit("selectVoiceIAResponseAnimation", {});
+      } catch (error) {
+        console.error(error);
+        sendError(error, data.room);
+      }
     }
   );
+
   socket.on("voiceIAPanelAnimation", (data: { room: string }) => {
-    io.in(data.room).emit("voiceIAPanelAnimationZoomOutResponse", {});
+    try {
+      io.in(data.room).emit("voiceIAPanelAnimationZoomOutResponse", {});
+    } catch (error) {
+      console.error(error);
+      sendError(error, data.room);
+    }
   });
+
   socket.on(
     "revealVoiceIAAnswer",
     (data: { room: string; revealVoiceIAAnswer: boolean }) => {
-      const room = getTheRoom(data.room);
-      room.revealVoiceIAAnswer = data.revealVoiceIAAnswer;
-      io.in(data.room).emit("revealVoiceIAAnswerResponse", {
-        revealVoiceIAAnswer: room.revealVoiceIAAnswer,
-      });
+      try {
+        const room = getTheRoom(data.room);
+        room.revealVoiceIAAnswer = data.revealVoiceIAAnswer;
+        io.in(data.room).emit("revealVoiceIAAnswerResponse", {
+          revealVoiceIAAnswer: room.revealVoiceIAAnswer,
+        });
+      } catch (error) {
+        console.error(error);
+        sendError(error, data.room);
+      }
     }
   );
+
   socket.on(
     "answersVoiceIAAnswer",
     (data: { room: string; goodAnswer: boolean }) => {
-      io.in(data.room).emit("answersVoiceIAAnswerResponse", {
-        goodAnswer: data.goodAnswer,
-      });
-      io.in(data.room).emit("answersVoiceIAAnswerResponseAnimation", {
-        goodAnswer: data.goodAnswer,
-      });
+      try {
+        io.in(data.room).emit("answersVoiceIAAnswerResponse", {
+          goodAnswer: data.goodAnswer,
+        });
+        io.in(data.room).emit("answersVoiceIAAnswerResponseAnimation", {
+          goodAnswer: data.goodAnswer,
+        });
+      } catch (error) {
+        console.error(error);
+        sendError(error, data.room);
+      }
     }
   );
 
   socket.on("unselectVoiceIA", (data: { room: string }) => {
-    io.in(data.room).emit("unselectVoiceIAResponse", {
-      selectedVoiceIA: { voice: "", text: "", anwser: "" },
-    });
+    try {
+      io.in(data.room).emit("unselectVoiceIAResponse", {
+        selectedVoiceIA: { voice: "", text: "", anwser: "" },
+      });
+    } catch (error) {
+      console.error(error);
+      sendError(error, data.room);
+    }
   });
+
   socket.on(
     "arrowQuestions",
     (data: {
@@ -521,116 +617,166 @@ io.on("connection", (socket) => {
       questionsLength: number;
       numberQuestion: number;
     }) => {
-      console.log(data.nextQuestion);
-      console.log(data.numberQuestion);
-      console.log(data.questionsLength);
-      let newNumberQuestion: number;
-      data.nextQuestion
-        ? data.numberQuestion + 1 == data.questionsLength
+      try {
+        console.log(data.nextQuestion);
+        console.log(data.numberQuestion);
+        console.log(data.questionsLength);
+        let newNumberQuestion: number;
+        data.nextQuestion
+          ? data.numberQuestion + 1 == data.questionsLength
+            ? (newNumberQuestion = data.numberQuestion)
+            : (newNumberQuestion = data.numberQuestion + 1)
+          : data.numberQuestion == 0
           ? (newNumberQuestion = data.numberQuestion)
-          : (newNumberQuestion = data.numberQuestion + 1)
-        : data.numberQuestion == 0
-        ? (newNumberQuestion = data.numberQuestion)
-        : (newNumberQuestion = data.numberQuestion - 1);
-      io.in(data.room).emit("arrowQuestionsResponse", {
-        newNumberQuestion: newNumberQuestion,
-      });
-    }
-  );
-  socket.on(
-    "vote",
-    (data: { room: string; playerVotedFor: Player; clientId: string }) => {
-      console.log("📩 vote received");
-      const room: Room = getTheRoom(data.room);
-      const realPlayers: Player[] = getRealPlayers(data.room);
-      if (realPlayers) {
-        const from: Player = realPlayers.find(
-          (player: Player) => player.idClient == data.clientId
-        );
-        const to: Player = data.playerVotedFor;
-        const voteAlreadyExist: Vote = room.votes.find(
-          (vote: Vote) => vote.from == from
-        );
-        if (!voteAlreadyExist) {
-          console.log("doesn exist");
-          room.votes.push({ from: from, to: to, confirm: false });
-        } else {
-          const voteindex: number = room.votes.findIndex(
-            (vote: Vote) => vote.from == from
-          );
-          room.votes[voteindex].to = to;
-        }
-        from.hasVoted = true;
-        updatesVotes(data.room);
-        socket.emit("hasVotedResponse", {
-          hasVoted: from.hasVoted,
+          : (newNumberQuestion = data.numberQuestion - 1);
+        io.in(data.room).emit("arrowQuestionsResponse", {
+          newNumberQuestion: newNumberQuestion,
         });
+      } catch (error) {
+        console.error(error);
+        sendError(error, data.room);
       }
     }
   );
+
+  socket.on(
+    "vote",
+    (data: { room: string; playerVotedFor: Player; clientId: string }) => {
+      try {
+        console.log("📩 vote received");
+        const room: Room = getTheRoom(data.room);
+        const realPlayers: Player[] = getRealPlayers(data.room);
+        if (realPlayers) {
+          const from: Player = realPlayers.find(
+            (player: Player) => player.idClient == data.clientId
+          );
+          const to: Player = data.playerVotedFor;
+          const voteAlreadyExist: Vote = room.votes.find(
+            (vote: Vote) => vote.from == from
+          );
+          if (!voteAlreadyExist) {
+            console.log("doesn exist");
+            room.votes.push({ from: from, to: to, confirm: false });
+          } else {
+            const voteindex: number = room.votes.findIndex(
+              (vote: Vote) => vote.from == from
+            );
+            room.votes[voteindex].to = to;
+          }
+          from.hasVoted = true;
+          updatesVotes(data.room);
+          socket.emit("hasVotedResponse", {
+            hasVoted: from.hasVoted,
+          });
+        }
+      } catch (error) {
+        console.error(error);
+        sendError(error, data.room);
+      }
+    }
+  );
+
   socket.on("confirmVote", (data: { room: string; clientId: string }) => {
-    const room = getTheRoom(data.room);
-    const voteToConfirm: Vote = room.votes.find(
-      (vote: Vote) => vote.from.idClient == data.clientId
-    );
-    if (voteToConfirm) {
-      voteToConfirm.confirm = true;
-      updatesVotes(data.room);
-      socket.emit("hasVoteConfirmedResponse", {
-        hasConfirmedVote: voteToConfirm.confirm,
-      });
+    try {
+      const room = getTheRoom(data.room);
+      const voteToConfirm: Vote = room.votes.find(
+        (vote: Vote) => vote.from.idClient == data.clientId
+      );
+      if (voteToConfirm) {
+        voteToConfirm.confirm = true;
+        updatesVotes(data.room);
+        socket.emit("hasVoteConfirmedResponse", {
+          hasConfirmedVote: voteToConfirm.confirm,
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      sendError(error, data.room);
     }
   });
+
   socket.on("everyoneConfirmDemand", (data: { room: string }) => {
-    const room: Room = getTheRoom(data.room);
-    const players: Player[] = getRealPlayers(data.room);
-    const votes: Vote[] = room.votes;
-    // let everyOneHasVoted:boolean
-    if (votes.length == players.length) {
-      const everyOneHasConfirmedVote: boolean = votes.every(
-        (vote: Vote) => vote.confirm === true
-      );
-      io.in(data.room).emit("everyOneHaseveryOneHasConfirmedVoteResponse", {
-        everyOneHasConfirmedVote: everyOneHasConfirmedVote,
-      });
+    try {
+      const room: Room = getTheRoom(data.room);
+      const players: Player[] = getRealPlayers(data.room);
+      const votes: Vote[] = room.votes;
+      // let everyOneHasVoted:boolean
+      if (votes.length == players.length) {
+        const everyOneHasConfirmedVote: boolean = votes.every(
+          (vote: Vote) => vote.confirm === true
+        );
+        io.in(data.room).emit("everyOneHaseveryOneHasConfirmedVoteResponse", {
+          everyOneHasConfirmedVote: everyOneHasConfirmedVote,
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      sendError(error, data.room);
     }
   });
   socket.on("demandVotesResult", (data: { room: string }) => {
-    const room: Room = getTheRoom(data.room);
-    const votes: Vote[] = room.votes;
-    const votesTo: Player[] = votes.map((vote: Vote) => vote.to);
-    const mostVotedPlayer: Player = getMostVotedPlayer(data.room);
-    const numberSubWinner: number = mostVotedPlayer.isTraitor
-      ? room.cagnotte.innocentValue
-      : room.cagnotte.traitorValue;
-    io.in(data.room).emit("demandVotesResultResponse", {
-      mostVotedPlayer: mostVotedPlayer,
-      displayVotesResult: true,
-      numberSubWinner: numberSubWinner,
-    });
+    try {
+      const room: Room = getTheRoom(data.room);
+      const votes: Vote[] = room.votes;
+      const votesTo: Player[] = votes.map((vote: Vote) => vote.to);
+      const mostVotedPlayer: Player = getMostVotedPlayer(data.room);
+      const numberSubWinner: number = mostVotedPlayer.isTraitor
+        ? room.cagnotte.innocentValue
+        : room.cagnotte.traitorValue;
+      io.in(data.room).emit("demandVotesResultResponse", {
+        mostVotedPlayer: mostVotedPlayer,
+        displayVotesResult: true,
+        numberSubWinner: numberSubWinner,
+      });
+    } catch (error) {
+      console.error(error);
+      sendError(error, data.room);
+    }
   });
+
   socket.on("playAudio", (data: { room: string; audio: string }) => {
-    // socket.on("playAudio", (data: { room: string; audio: HTMLAudioElement }) => {
-    io.in(data.room).emit("playAudioResponse", {
-      audio: data.audio,
-    });
+    try {
+      // socket.on("playAudio", (data: { room: string; audio: HTMLAudioElement }) => {
+      io.in(data.room).emit("playAudioResponse", {
+        audio: data.audio,
+      });
+    } catch (error) {
+      console.error(error);
+      sendError(error, data.room);
+    }
   });
   socket.on("stopAudio", (data: { room: string }) => {
-    console.log("stop audio");
-    io.in(data.room).emit("stopAudioResponse", {});
+    try {
+      console.log("stop audio");
+      io.in(data.room).emit("stopAudioResponse", {});
+    } catch (error) {
+      console.error(error);
+      sendError(error, data.room);
+    }
   });
   socket.on("volumeAudio", (data: { room: string; volume: number }) => {
-    console.log(data.volume);
-    socket.emit("volumeAudioResponse", {
-      volume: data.volume,
-    });
+    try {
+      console.log(data.volume);
+      socket.emit("volumeAudioResponse", {
+        volume: data.volume,
+      });
+    } catch (error) {
+      console.error(error);
+      sendError(error, data.room);
+    }
   });
+
   socket.on(
     "toggleRevealAnswer",
     (data: { room: string; revealAnswer: boolean }) => {
-      io.in(data.room).emit("toggleRevealAnswerResponse", {
-        revealAnswer: !data.revealAnswer,
-      });
+      try {
+        io.in(data.room).emit("toggleRevealAnswerResponse", {
+          revealAnswer: !data.revealAnswer,
+        });
+      } catch (error) {
+        console.error(error);
+        sendError(error, data.room);
+      }
     }
   );
 });
