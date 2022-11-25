@@ -777,15 +777,15 @@ io.on("connection", (socket) => {
   );
 });
 
-httpServer.listen(
-  process.env.ALWAYSDATA_HTTPD_PORT,
-  process.env.ALWAYSDATA_HTTPD_IP,
-  () => {
-    console.log(
-      `🚀 server is listening on port ${process.env.ALWAYSDATA_HTTPD_PORT}`
-    );
-  }
-);
-// httpServer.listen(PORT, () => {
-//   console.log(`🚀 server is listening on port ${PORT}`);
-// });
+// httpServer.listen(
+//   process.env.ALWAYSDATA_HTTPD_PORT,
+//   process.env.ALWAYSDATA_HTTPD_IP,
+//   () => {
+//     console.log(
+//       `🚀 server is listening on port ${process.env.ALWAYSDATA_HTTPD_PORT}`
+//     );
+//   }
+// );
+httpServer.listen(PORT, () => {
+  console.log(`🚀 server is listening on port ${PORT}`);
+});

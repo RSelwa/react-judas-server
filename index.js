@@ -672,9 +672,15 @@ io.on("connection", function (socket) {
         }
     });
 });
-httpServer.listen(process.env.ALWAYSDATA_HTTPD_PORT, process.env.ALWAYSDATA_HTTPD_IP, function () {
-    console.log("\uD83D\uDE80 server is listening on port ".concat(process.env.ALWAYSDATA_HTTPD_PORT));
+// httpServer.listen(
+//   process.env.ALWAYSDATA_HTTPD_PORT,
+//   process.env.ALWAYSDATA_HTTPD_IP,
+//   () => {
+//     console.log(
+//       `🚀 server is listening on port ${process.env.ALWAYSDATA_HTTPD_PORT}`
+//     );
+//   }
+// );
+httpServer.listen(PORT, function () {
+    console.log("\uD83D\uDE80 server is listening on port ".concat(PORT));
 });
-// httpServer.listen(PORT, () => {
-//   console.log(`🚀 server is listening on port ${PORT}`);
-// });
