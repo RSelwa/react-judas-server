@@ -21,6 +21,7 @@ const io = require("socket.io")(httpServer, options);
 const axios = require("axios");
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET,POST");
 });
 app.get("/", (req, res) => {
   res.send("Hello World! I'm a react server");
