@@ -8,6 +8,7 @@ var options = {
         origin: [
             "http://judas.r-selwa.space",
             "https://judas.r-selwa.space",
+            "https://judas.r-selwa.space/",
             "http://localhost:5173",
             "*",
         ],
