@@ -1,4 +1,6 @@
 import { Cagnotte, Player, Room, VoiceIA, Vote } from "./Type";
+import { createServer } from "http";
+import { Server } from "socket.io";
 
 //#region socket
 const PORT = process.env.port || 6602;
@@ -10,14 +12,11 @@ const options = {
   },
 };
 const app = require("express")();
-const httpServer = require("http").createServer(app);
-const io = require("socket.io")(httpServer, options);
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET,POST");
-  res.header("Access-Control-Allow-Headers", "Content-Type");
-  next();
-});
+// const httpServer = require("http").createServer(app);
+// const io = require("socket.io")(httpServer, options);
+const httpServer = createServer();
+const io = new Server(httpServer, options);
+
 app.get("/", (req, res) => {
   res.send("Hello World! I'm a react server");
 });
@@ -109,8 +108,9 @@ let clients: Player[] = [];
 let rooms: Room[] = [];
 
 io.on("connection", (socket) => {
-  const socketClientId = socket.client.id;
-  console.log("🟢 new connection", socketClientId);
+  // const socketClientId = socket.client.id;
+  console.log("🟢 new connection", "");
+  // console.log("🟢 new connection", socketClientId);
 
   //#region Functions
   const sendError = (errorMessage: string, roomId: string) => {
@@ -127,7 +127,8 @@ io.on("connection", (socket) => {
 
   const removePlayer = () => {
     try {
-      const clientOnClients: Player = getClientByID(socketClientId);
+      // const clientOnClients: Player = getClientByID(socketClientId);
+      const clientOnClients: Player = getClientByID("");
       //* if clients exists in clients
       if (clientOnClients) {
         //* find the room of the player
@@ -240,7 +241,7 @@ io.on("connection", (socket) => {
         }
 
         const newPlayer: Player = {
-          idServer: socketClientId,
+          // idServer: socketClientId,
           idClient: data.idClient,
           room: data.room,
           name: data.name,
@@ -306,7 +307,8 @@ io.on("connection", (socket) => {
       if (
         !getTheRoom(data.room) ||
         !getTheRoom(data.room)!.players.some(
-          (player) => player.idServer === socket.client.id
+          (player) => player === player
+          // (player) => player.idServer === socket.client.id
         )
       ) {
         console.log("redirect to lobby or to main menu");

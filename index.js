@@ -1,6 +1,8 @@
 "use strict";
 exports.__esModule = true;
 exports.getMostVotedPlayer = exports.findOcc = exports.getRealPlayers = exports.getTheRoom = exports.getPlayerByIdClient = exports.getClientByID = void 0;
+var http_1 = require("http");
+var socket_io_1 = require("socket.io");
 //#region socket
 var PORT = process.env.port || 6602;
 var options = {
@@ -10,14 +12,10 @@ var options = {
     }
 };
 var app = require("express")();
-var httpServer = require("http").createServer(app);
-var io = require("socket.io")(httpServer, options);
-app.use(function (req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Methods", "GET,POST");
-    res.header("Access-Control-Allow-Headers", "Content-Type");
-    next();
-});
+// const httpServer = require("http").createServer(app);
+// const io = require("socket.io")(httpServer, options);
+var httpServer = (0, http_1.createServer)();
+var io = new socket_io_1.Server(httpServer, options);
 app.get("/", function (req, res) {
     res.send("Hello World! I'm a react server");
 });
@@ -100,8 +98,9 @@ exports.getMostVotedPlayer = getMostVotedPlayer;
 var clients = [];
 var rooms = [];
 io.on("connection", function (socket) {
-    var socketClientId = socket.client.id;
-    console.log("🟢 new connection", socketClientId);
+    // const socketClientId = socket.client.id;
+    console.log("🟢 new connection", "");
+    // console.log("🟢 new connection", socketClientId);
     //#region Functions
     var sendError = function (errorMessage, roomId) {
         io["in"](roomId).emit("error", {
@@ -115,7 +114,8 @@ io.on("connection", function (socket) {
     };
     var removePlayer = function () {
         try {
-            var clientOnClients_1 = getClientByID(socketClientId);
+            // const clientOnClients: Player = getClientByID(socketClientId);
+            var clientOnClients_1 = getClientByID("");
             //* if clients exists in clients
             if (clientOnClients_1) {
                 //* find the room of the player
@@ -204,7 +204,7 @@ io.on("connection", function (socket) {
                 return;
             }
             var newPlayer = {
-                idServer: socketClientId,
+                // idServer: socketClientId,
                 idClient: data.idClient,
                 room: data.room,
                 name: data.name,
@@ -264,7 +264,9 @@ io.on("connection", function (socket) {
         try {
             //! check if player is coming directely from link to game
             if (!getTheRoom(data.room) ||
-                !getTheRoom(data.room).players.some(function (player) { return player.idServer === socket.client.id; })) {
+                !getTheRoom(data.room).players.some(function (player) { return player === player; }
+                // (player) => player.idServer === socket.client.id
+                )) {
                 console.log("redirect to lobby or to main menu");
                 socket.emit("redirectToMain", {});
             }
