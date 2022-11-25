@@ -16,7 +16,13 @@ const httpServer = require("http").createServer(app);
 const io = require("socket.io")(httpServer, options);
 // const httpServer = createServer();
 // const io = new Server(httpServer, options);
-
+app.listen(
+  process.env.ALWAYSDATA_HTTPD_PORT,
+  process.env.ALWAYSDATA_HTTPD_IP,
+  () => {
+    console.log("test");
+  }
+);
 app.get("/", (req, res) => {
   res.send("Hello World! I'm a react server" + PORT);
 });
