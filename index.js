@@ -17,7 +17,7 @@ var app = require("express")();
 var httpServer = (0, http_1.createServer)();
 var io = new socket_io_1.Server(httpServer, options);
 app.get("/", function (req, res) {
-    res.send("Hello World! I'm a react server");
+    res.send("Hello World! I'm a react server" + PORT);
 });
 //#endregion
 function getClientByID(clientId) {

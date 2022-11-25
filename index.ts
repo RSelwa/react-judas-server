@@ -18,7 +18,7 @@ const httpServer = createServer();
 const io = new Server(httpServer, options);
 
 app.get("/", (req, res) => {
-  res.send("Hello World! I'm a react server");
+  res.send("Hello World! I'm a react server" + PORT);
 });
 //#endregion
 
