@@ -1,8 +1,6 @@
 "use strict";
 exports.__esModule = true;
 exports.getMostVotedPlayer = exports.findOcc = exports.getRealPlayers = exports.getTheRoom = exports.getPlayerByIdClient = exports.getClientByID = void 0;
-var http_1 = require("http");
-var socket_io_1 = require("socket.io");
 //#region socket
 var PORT = process.env.port || 6602;
 var options = {
@@ -12,10 +10,10 @@ var options = {
     }
 };
 var app = require("express")();
-// const httpServer = require("http").createServer(app);
-// const io = require("socket.io")(httpServer, options);
-var httpServer = (0, http_1.createServer)();
-var io = new socket_io_1.Server(httpServer, options);
+var httpServer = require("http").createServer(app);
+var io = require("socket.io")(httpServer, options);
+// const httpServer = createServer();
+// const io = new Server(httpServer, options);
 app.get("/", function (req, res) {
     res.send("Hello World! I'm a react server" + PORT);
 });
