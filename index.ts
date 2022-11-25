@@ -5,8 +5,8 @@ const PORT = process.env.port || 6602;
 const options = {
   cors: {
     origin: [
-      "http://judas.r-selwa.space",
-      "https://judas.r-selwa.space",
+      "http://judas.r-selwa.space/",
+      "https://judas.r-selwa.space/",
       "http://react-judas.r-selwa.space",
       "https://react-judas.r-selwa.space",
       "http://localhost:8080",
