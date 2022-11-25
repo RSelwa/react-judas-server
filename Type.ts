@@ -1,5 +1,5 @@
-export type VoiceIA = { voice: string; text: string; answer: string };
-export type Player = {
+export type VoiceIAType = { voice: string; text: string; answer: string };
+export type PlayerType = {
   idServer?: string;
   idClient?: string;
   room: string;
@@ -12,18 +12,21 @@ export type Player = {
   isController: boolean;
   isViewer: boolean;
 };
-export type Cagnotte = {
+export type CagnotteType = {
   name: "innocent" | "traitor";
-
   value: number;
 };
-export type Room = {
+export type ModeType = "" | "questions" | "justePrix" | "voiceIa" | "vote";
+
+export type RoomType = {
   id: string;
-  players: Player[];
-  cagnottes: Cagnotte[];
-  votes: Vote[];
+  players: PlayerType[];
+  cagnottes: CagnotteType[];
+  votes: VoteType[];
   isGameLaunched: boolean;
-  mode: "" | "questions" | "justePrix" | "voiceIa" | "votes";
+  isGameStarted: boolean;
+
+  mode: ModeType;
   // traitorId: string;
   isRevealRole: boolean;
   // votesLaunched: boolean;
@@ -34,12 +37,12 @@ export type Room = {
   revealAnswerQuestion: boolean;
   revealVoiceIAAnswer: boolean;
 };
-export type Vote = {
-  from: Player;
-  to: Player;
+export type VoteType = {
+  from: PlayerType;
+  to: PlayerType;
   confirm: boolean;
 };
-export type Question = {
+export type QuestionType = {
   _id: string;
   question: string;
   response: string;

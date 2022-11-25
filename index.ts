@@ -1,4 +1,11 @@
-import { Cagnotte, Player, Room, VoiceIA, Vote } from "./Type";
+import {
+  CagnotteType,
+  ModeType,
+  PlayerType,
+  RoomType,
+  VoiceIAType,
+  VoteType,
+} from "./Type";
 import { createServer } from "http";
 import { Server } from "socket.io";
 
@@ -23,25 +30,33 @@ app.get("/", (req, res) => {
 });
 //#endregion
 
-export function getClientByID(clientId: string): Player {
+//#region functions
+export function getClientByID(clientId: string): PlayerType {
   //* get the id of the client in all the clients
-  const client: Player = clients.find((client) => client.idServer == clientId);
+  const client: PlayerType = clients.find(
+    (client) => client.idServer == clientId
+  );
   return client;
   //   return clientId;
 }
-export function getPlayerByIdClient(idClient: string, room: string): Player {
-  const players: Player[] = getTheRoom(room).players;
-  const player = players.find((player: Player) => player.idClient == idClient);
+export function getPlayerByIdClient(
+  idClient: string,
+  room: string
+): PlayerType {
+  const players: PlayerType[] = getTheRoom(room).players;
+  const player = players.find(
+    (player: PlayerType) => player.idClient == idClient
+  );
   return player;
 }
-export function getTheRoom(dataRoom: string): Room {
+export function getTheRoom(dataRoom: string): RoomType {
   return rooms.find((e) => e.id == dataRoom);
 }
-export function getRealPlayers(dataRoom: string): Player[] {
-  const room: Room = getTheRoom(dataRoom);
+export function getRealPlayers(dataRoom: string): PlayerType[] {
+  const room: RoomType = getTheRoom(dataRoom);
   if (room) {
     return room.players.filter(
-      (player: Player) => !player.isController && !player.isViewer
+      (player: PlayerType) => !player.isController && !player.isViewer
     );
   }
 }
@@ -76,12 +91,12 @@ export function findOcc(arr: any[], key: string) {
 
   return arr2;
 }
-export function getMostVotedPlayer(dataRoom: string): Player {
+export function getMostVotedPlayer(dataRoom: string): PlayerType {
   //# si c'est 1 partout faire en sorte que le traitre ne soit pas designé comme le mostVoted, ici c'est le dernier player qui a été voté soit le last dans room.votes
   const selectInnocent: boolean = true;
   const room = getTheRoom(dataRoom);
-  const votes: Vote[] = room.votes;
-  const votesTo: Player[] = votes.map((vote: Vote) => vote.to);
+  const votes: VoteType[] = room.votes;
+  const votesTo: PlayerType[] = votes.map((vote: VoteType) => vote.to);
   const arr2: { idClient: string; occurrence: number }[] = findOcc(
     votesTo,
     "idClient"
@@ -92,7 +107,7 @@ export function getMostVotedPlayer(dataRoom: string): Player {
       return arr.occurrence == maxOccurences;
     }
   );
-  const mostVotedPlayer: Player =
+  const mostVotedPlayer: PlayerType =
     result.length > 1
       ? getPlayerByIdClient(result[0].idClient, dataRoom).isTraitor
         ? selectInnocent
@@ -105,15 +120,17 @@ export function getMostVotedPlayer(dataRoom: string): Player {
   return mostVotedPlayer;
 }
 
-let clients: Player[] = [];
-let rooms: Room[] = [];
+//#endregion
+
+let clients: PlayerType[] = [];
+let rooms: RoomType[] = [];
 
 io.on("connection", (socket) => {
-  // const socketClientId = socket.client.id;
-  console.log("🟢 new connection", "");
-  // console.log("🟢 new connection", socketClientId);
+  const socketClientId = socket.client.id;
+  // console.log("🟢 new connection", "");
+  console.log("🟢 new connection", socketClientId);
 
-  //#region Functions
+  //#region Functions in
   const sendError = (errorMessage: string, roomId: string) => {
     io.in(roomId).emit("error", {
       message: errorMessage,
@@ -128,26 +145,26 @@ io.on("connection", (socket) => {
 
   const removePlayer = () => {
     try {
-      // const clientOnClients: Player = getClientByID(socketClientId);
-      const clientOnClients: Player = getClientByID("");
+      const clientOnClients: PlayerType = getClientByID(socketClientId);
+      // const clientOnClients: PlayerType = getClientByID("");
       //* if clients exists in clients
       if (clientOnClients) {
         //* find the room of the player
-        const roomOfPlayer: Room = getTheRoom(clientOnClients.room);
+        const roomOfPlayer: RoomType = getTheRoom(clientOnClients.room);
 
         //* trouve le joueur dans room.player qui correspond à l'clientOnClients (qui est notre joueur deconnecté by id), puis le supprime de room.players
         roomOfPlayer.players.splice(
           roomOfPlayer.players.indexOf(
             roomOfPlayer.players.find(
-              (player: Player) => player == clientOnClients
+              (player: PlayerType) => player == clientOnClients
             )
           ),
           1
         );
         //* s'il n'y a plus de joueurs dans la room, supprime la room, faire gaffe aux viewer qui sont pas players?
         if (roomOfPlayer.players.length <= 0) {
-          const roomInRooms: Room = rooms.find(
-            (room: Room) => room == roomOfPlayer
+          const roomInRooms: RoomType = rooms.find(
+            (room: RoomType) => room == roomOfPlayer
           );
           rooms.splice(rooms.indexOf(roomInRooms), 1);
         }
@@ -169,25 +186,48 @@ io.on("connection", (socket) => {
       players: getRealPlayers(room),
     });
   }
-  function updateCagnottes(room: string, cagnotte: Cagnotte): void {
+  function updateCagnottes(room: string, cagnotte: CagnotteType): void {
     io.in(room).emit("updateCagnottesResponse", {
       cagnotte: cagnotte,
       // players: getAllClientsWithSameRoom(dataRoom),
     });
   }
   function updatesVotes(dataRoom: string): void {
-    const room: Room = getTheRoom(dataRoom);
+    const room: RoomType = getTheRoom(dataRoom);
 
     io.in(dataRoom).emit("voteResponse", {
       votes: room.votes,
     });
   }
   function updatesInRoom(dataRoom: string): void {
-    const room: Room = getTheRoom(dataRoom);
+    const room: RoomType = getTheRoom(dataRoom);
     socket.emit("statusGameResponse", {
       isInGame: room.isGameLaunched,
     });
   }
+
+  const selectTraitor = (room: RoomType) => {
+    const realPlayers: PlayerType[] = getRealPlayers(room.id);
+    if (realPlayers.length) {
+      const randomTraitor: PlayerType =
+        realPlayers[Math.floor(Math.random() * realPlayers.length)];
+      // room.traitorId = randomTraitor.idClient;
+      room.players.find((player) => player == randomTraitor).isTraitor = true;
+    }
+    updateRoomClient(room.id);
+  };
+  const resetTraitor = (room: RoomType) => {
+    const playerTraitor: PlayerType = room.players.find(
+      (player: PlayerType) => player.isTraitor == true
+    );
+    if (playerTraitor) {
+      playerTraitor.isTraitor = false;
+      // room.traitorId = "";
+      room.isGameStarted = false;
+      updateRoomClient(room.id);
+    }
+  };
+
   //#endregion
 
   socket.on("test", (data: { room: string; mes: string }) => {
@@ -212,6 +252,7 @@ io.on("connection", (socket) => {
     removePlayer();
   });
 
+  //when join Lobby
   socket.on("joinRoom", (data: { room: string }) => {
     try {
       console.log("join room ", data.room);
@@ -227,6 +268,7 @@ io.on("connection", (socket) => {
     }
   });
 
+  //create player
   socket.on(
     "createPlayer",
     (data: {
@@ -241,8 +283,8 @@ io.on("connection", (socket) => {
           return;
         }
 
-        const newPlayer: Player = {
-          // idServer: socketClientId,
+        const newPlayer: PlayerType = {
+          idServer: socketClientId,
           idClient: data.idClient,
           room: data.room,
           name: data.name,
@@ -276,6 +318,7 @@ io.on("connection", (socket) => {
           rooms.push({
             id: data.room,
             isGameLaunched: false,
+            isGameStarted: false,
             players: [],
             cagnottes: [
               { name: "innocent", value: 0 },
@@ -324,20 +367,69 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("resetCagnottes", (data: { room: string }) => {
+    try {
+      const room: RoomType = getTheRoom(data.room);
+      room.cagnottes = [
+        { name: "innocent", value: 0 },
+        { name: "traitor", value: 0 },
+      ];
+      updateRoomClient(data.room);
+    } catch (error) {
+      console.error(error);
+      sendError(error, data.room);
+    }
+  });
+
+  socket.on("launchGame", (data: { room: string }) => {
+    try {
+      const room: RoomType = getTheRoom(data.room);
+      room.isGameLaunched = true;
+      updateRoomClient(data.room);
+    } catch (error) {
+      console.error(error);
+      sendError(error, data.room);
+    }
+  });
+  socket.on("startGame", (data: { room: string }) => {
+    try {
+      const room: RoomType = getTheRoom(data.room);
+      selectTraitor(room);
+      room.isGameStarted = true;
+      updateRoomClient(data.room);
+    } catch (error) {
+      console.error(error);
+      sendError(error, data.room);
+    }
+  });
+
+  socket.on("stopGame", (data: { room: string }) => {
+    try {
+      const room: RoomType = getTheRoom(data.room);
+      room.isGameStarted = false;
+      resetTraitor(room);
+      updateRoomClient(data.room);
+    } catch (error) {
+      console.error(error);
+      sendError(error, data.room);
+    }
+  });
   socket.on(
-    "revealRole",
-    (data: { room: string; viewerRevealRole: boolean }) => {
+    "modifyPlayerPts",
+    (data: { room: string; player: PlayerType; newValue: number }) => {
       try {
-        io.in(data.room).emit("revealRoleResponse", {
-          viewerRevealRole: !data.viewerRevealRole,
-        });
+        const room: RoomType = getTheRoom(data.room);
+
+        room.players.find(
+          (player) => player.idClient === data.player.idClient
+        ).pts = data.newValue;
+        updateRoomClient(data.room);
       } catch (error) {
         console.error(error);
         sendError(error, data.room);
       }
     }
   );
-
   socket.on(
     "modifyCagnottes",
     (data: {
@@ -346,7 +438,7 @@ io.on("connection", (socket) => {
       cagnotteName: "innocent" | "traitor";
     }) => {
       try {
-        const room: Room = getTheRoom(data.room);
+        const room: RoomType = getTheRoom(data.room);
         room.cagnottes.find((c) => c.name === data.cagnotteName).value =
           data.newValue;
         updateRoomClient(data.room);
@@ -362,13 +454,11 @@ io.on("connection", (socket) => {
     }
   );
 
-  socket.on("resetCagnottes", (data: { room: string }) => {
+  socket.on("revealRole", (data: { room: string; revealRole: boolean }) => {
     try {
-      const room: Room = getTheRoom(data.room);
-      room.cagnottes = [
-        { name: "innocent", value: 0 },
-        { name: "traitor", value: 0 },
-      ];
+      const room: RoomType = getTheRoom(data.room);
+
+      room.isRevealRole = data.revealRole;
       updateRoomClient(data.room);
     } catch (error) {
       console.error(error);
@@ -376,59 +466,16 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on(
-    "modifyPlayerPts",
-    (data: { room: string; player: Player; newValue: number }) => {
-      try {
-        const room: Room = getTheRoom(data.room);
-
-        room.players.find(
-          (player) => player.idClient === data.player.idClient
-        ).pts = data.newValue;
-        updateRoomClient(data.room);
-      } catch (error) {
-        console.error(error);
-        sendError(error, data.room);
-      }
-    }
-  );
-
-  socket.on("startGame", (data: { room: string }) => {
+  socket.on("changeMode", (data: { room: string; mode: ModeType }) => {
     try {
-      const room: Room = getTheRoom(data.room);
-      const realPlayers: Player[] = getRealPlayers(data.room);
-      if (realPlayers.length > 0) {
-        const randomTraitor: Player =
-          realPlayers[Math.floor(Math.random() * realPlayers.length)];
-        // room.traitorId = randomTraitor.idClient;
-        room.players.find((player) => player == randomTraitor).isTraitor = true;
-      }
-      room.isGameLaunched = true;
+      const room: RoomType = getTheRoom(data.room);
+      room.mode = data.mode;
       updateRoomClient(data.room);
     } catch (error) {
       console.error(error);
       sendError(error, data.room);
     }
   });
-
-  socket.on("stopGame", (data: { room: string }) => {
-    try {
-      const room: Room = getTheRoom(data.room);
-      const playerTraitor: Player = room.players.find(
-        (player: Player) => player.isTraitor == true
-      );
-      if (playerTraitor) {
-        playerTraitor.isTraitor = false;
-        // room.traitorId = "";
-        room.isGameLaunched = false;
-        updateRoomClient(data.room);
-      }
-    } catch (error) {
-      console.error(error);
-      sendError(error, data.room);
-    }
-  });
-
   socket.on("toggleGameStatus", (data: { room: string; isInGame: boolean }) => {
     try {
       io.in(data.room).emit("statusGameResponse", {
@@ -444,8 +491,8 @@ io.on("connection", (socket) => {
   socket.on("launchVote", (data: { room: string }) => {
     try {
       console.log("✉️ votes initiate");
-      const room: Room = getTheRoom(data.room);
-      room.mode = "votes";
+      const room: RoomType = getTheRoom(data.room);
+      room.mode = "vote";
       // io.in(data.room).emit("launchVoteResponse", {
       //   votesLaunched: room.votesLaunched,
       // });
@@ -462,11 +509,11 @@ io.on("connection", (socket) => {
   socket.on("stopVote", (data: { room: string }) => {
     try {
       console.log("❌ votes stop");
-      const room: Room = getTheRoom(data.room);
+      const room: RoomType = getTheRoom(data.room);
       room.mode = "";
       room.votes = [];
       updatesVotes(data.room);
-      room.players.forEach((player: Player) => {
+      room.players.forEach((player: PlayerType) => {
         player.hasVoted = false;
         player.voteConfirmed = false;
       });
@@ -493,7 +540,7 @@ io.on("connection", (socket) => {
     (data: { room: string; questionsLaunched: boolean }) => {
       try {
         console.log(data.questionsLaunched);
-        const room: Room = getTheRoom(data.room);
+        const room: RoomType = getTheRoom(data.room);
         room.mode = "questions";
         updateRoomClient(data.room);
       } catch (error) {
@@ -508,7 +555,7 @@ io.on("connection", (socket) => {
   //   (data: { room: string; voiceIALaunched: boolean }) => {
   //     try {
   //       console.log("toggle voice IA");
-  //       const room: Room = getTheRoom(data.room);
+  //       const room: RoomType = getTheRoom(data.room);
   //       room.voiceIALaunched = !data.voiceIALaunched;
   //       io.in(data.room).emit("toggleLauncheVoiceIaResponse", {
   //         voiceIALaunched: room.voiceIALaunched,
@@ -525,7 +572,7 @@ io.on("connection", (socket) => {
   //   (data: { room: string; voiceIAVoicePlayed: boolean }) => {
   //     try {
   //       console.log("toggle play voice IA");
-  //       const room: Room = getTheRoom(data.room);
+  //       const room: RoomType = getTheRoom(data.room);
   //       room.voiceIAVoicePlayed = !data.voiceIAVoicePlayed;
   //       io.in(data.room).emit("toggleVoiceIAVoicePlayedResponse", {
   //         voiceIAVoicePlayed: room.voiceIAVoicePlayed,
@@ -539,7 +586,7 @@ io.on("connection", (socket) => {
 
   socket.on(
     "selectVoiceIA",
-    (data: { room: string; selectedVoiceIA: VoiceIA }) => {
+    (data: { room: string; selectedVoiceIA: VoiceIAType }) => {
       try {
         console.log(data.selectedVoiceIA);
         io.in(data.room).emit("selectVoiceIAResponse", {
@@ -639,25 +686,25 @@ io.on("connection", (socket) => {
 
   socket.on(
     "vote",
-    (data: { room: string; playerVotedFor: Player; clientId: string }) => {
+    (data: { room: string; playerVotedFor: PlayerType; clientId: string }) => {
       try {
         console.log("📩 vote received");
-        const room: Room = getTheRoom(data.room);
-        const realPlayers: Player[] = getRealPlayers(data.room);
+        const room: RoomType = getTheRoom(data.room);
+        const realPlayers: PlayerType[] = getRealPlayers(data.room);
         if (realPlayers) {
-          const from: Player = realPlayers.find(
-            (player: Player) => player.idClient == data.clientId
+          const from: PlayerType = realPlayers.find(
+            (player: PlayerType) => player.idClient == data.clientId
           );
-          const to: Player = data.playerVotedFor;
-          const voteAlreadyExist: Vote = room.votes.find(
-            (vote: Vote) => vote.from == from
+          const to: PlayerType = data.playerVotedFor;
+          const voteAlreadyExist: VoteType = room.votes.find(
+            (vote: VoteType) => vote.from == from
           );
           if (!voteAlreadyExist) {
             console.log("doesn exist");
             room.votes.push({ from: from, to: to, confirm: false });
           } else {
             const voteindex: number = room.votes.findIndex(
-              (vote: Vote) => vote.from == from
+              (vote: VoteType) => vote.from == from
             );
             room.votes[voteindex].to = to;
           }
@@ -677,8 +724,8 @@ io.on("connection", (socket) => {
   socket.on("confirmVote", (data: { room: string; clientId: string }) => {
     try {
       const room = getTheRoom(data.room);
-      const voteToConfirm: Vote = room.votes.find(
-        (vote: Vote) => vote.from.idClient == data.clientId
+      const voteToConfirm: VoteType = room.votes.find(
+        (vote: VoteType) => vote.from.idClient == data.clientId
       );
       if (voteToConfirm) {
         voteToConfirm.confirm = true;
@@ -695,13 +742,13 @@ io.on("connection", (socket) => {
 
   socket.on("everyoneConfirmDemand", (data: { room: string }) => {
     try {
-      const room: Room = getTheRoom(data.room);
-      const players: Player[] = getRealPlayers(data.room);
-      const votes: Vote[] = room.votes;
+      const room: RoomType = getTheRoom(data.room);
+      const players: PlayerType[] = getRealPlayers(data.room);
+      const votes: VoteType[] = room.votes;
       // let everyOneHasVoted:boolean
       if (votes.length == players.length) {
         const everyOneHasConfirmedVote: boolean = votes.every(
-          (vote: Vote) => vote.confirm === true
+          (vote: VoteType) => vote.confirm === true
         );
         io.in(data.room).emit("everyOneHaseveryOneHasConfirmedVoteResponse", {
           everyOneHasConfirmedVote: everyOneHasConfirmedVote,
@@ -714,10 +761,10 @@ io.on("connection", (socket) => {
   });
   socket.on("demandVotesResult", (data: { room: string }) => {
     try {
-      const room: Room = getTheRoom(data.room);
-      const votes: Vote[] = room.votes;
-      const votesTo: Player[] = votes.map((vote: Vote) => vote.to);
-      const mostVotedPlayer: Player = getMostVotedPlayer(data.room);
+      const room: RoomType = getTheRoom(data.room);
+      const votes: VoteType[] = room.votes;
+      const votesTo: PlayerType[] = votes.map((vote: VoteType) => vote.to);
+      const mostVotedPlayer: PlayerType = getMostVotedPlayer(data.room);
       const numberSubWinner: number = mostVotedPlayer.isTraitor
         ? room.cagnottes.find((cagnotte) => cagnotte.name === "innocent").value
         : room.cagnottes.find((cagnotte) => cagnotte.name === "traitor").value;

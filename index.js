@@ -19,6 +19,7 @@ app.get("/", function (req, res) {
     res.send("Hello World! I'm a react server" + PORT);
 });
 //#endregion
+//#region functions
 function getClientByID(clientId) {
     //* get the id of the client in all the clients
     var client = clients.find(function (client) { return client.idServer == clientId; });
@@ -94,13 +95,14 @@ function getMostVotedPlayer(dataRoom) {
     return mostVotedPlayer;
 }
 exports.getMostVotedPlayer = getMostVotedPlayer;
+//#endregion
 var clients = [];
 var rooms = [];
 io.on("connection", function (socket) {
-    // const socketClientId = socket.client.id;
-    console.log("🟢 new connection", "");
-    // console.log("🟢 new connection", socketClientId);
-    //#region Functions
+    var socketClientId = socket.client.id;
+    // console.log("🟢 new connection", "");
+    console.log("🟢 new connection", socketClientId);
+    //#region Functions in
     var sendError = function (errorMessage, roomId) {
         io["in"](roomId).emit("error", {
             message: errorMessage
@@ -113,8 +115,8 @@ io.on("connection", function (socket) {
     };
     var removePlayer = function () {
         try {
-            // const clientOnClients: Player = getClientByID(socketClientId);
-            var clientOnClients_1 = getClientByID("");
+            var clientOnClients_1 = getClientByID(socketClientId);
+            // const clientOnClients: PlayerType = getClientByID("");
             //* if clients exists in clients
             if (clientOnClients_1) {
                 //* find the room of the player
@@ -162,6 +164,24 @@ io.on("connection", function (socket) {
             isInGame: room.isGameLaunched
         });
     }
+    var selectTraitor = function (room) {
+        var realPlayers = getRealPlayers(room.id);
+        if (realPlayers.length) {
+            var randomTraitor_1 = realPlayers[Math.floor(Math.random() * realPlayers.length)];
+            // room.traitorId = randomTraitor.idClient;
+            room.players.find(function (player) { return player == randomTraitor_1; }).isTraitor = true;
+        }
+        updateRoomClient(room.id);
+    };
+    var resetTraitor = function (room) {
+        var playerTraitor = room.players.find(function (player) { return player.isTraitor == true; });
+        if (playerTraitor) {
+            playerTraitor.isTraitor = false;
+            // room.traitorId = "";
+            room.isGameStarted = false;
+            updateRoomClient(room.id);
+        }
+    };
     //#endregion
     socket.on("test", function (data) {
         try {
@@ -183,6 +203,7 @@ io.on("connection", function (socket) {
         console.log("🟠 user go back to lobby");
         removePlayer();
     });
+    //when join Lobby
     socket.on("joinRoom", function (data) {
         try {
             console.log("join room ", data.room);
@@ -197,13 +218,14 @@ io.on("connection", function (socket) {
             sendError(error, data.room);
         }
     });
+    //create player
     socket.on("createPlayer", function (data) {
         try {
             if (clients.some(function (client) { return client.idClient === data.idClient; })) {
                 return;
             }
             var newPlayer = {
-                // idServer: socketClientId,
+                idServer: socketClientId,
                 idClient: data.idClient,
                 room: data.room,
                 name: data.name,
@@ -234,6 +256,7 @@ io.on("connection", function (socket) {
                 rooms.push({
                     id: data.room,
                     isGameLaunched: false,
+                    isGameStarted: false,
                     players: [],
                     cagnottes: [
                         { name: "innocent", value: 0 },
@@ -277,11 +300,60 @@ io.on("connection", function (socket) {
             sendError(error, data.room);
         }
     });
-    socket.on("revealRole", function (data) {
+    socket.on("resetCagnottes", function (data) {
         try {
-            io["in"](data.room).emit("revealRoleResponse", {
-                viewerRevealRole: !data.viewerRevealRole
-            });
+            var room = getTheRoom(data.room);
+            room.cagnottes = [
+                { name: "innocent", value: 0 },
+                { name: "traitor", value: 0 },
+            ];
+            updateRoomClient(data.room);
+        }
+        catch (error) {
+            console.error(error);
+            sendError(error, data.room);
+        }
+    });
+    socket.on("launchGame", function (data) {
+        try {
+            var room = getTheRoom(data.room);
+            room.isGameLaunched = true;
+            updateRoomClient(data.room);
+        }
+        catch (error) {
+            console.error(error);
+            sendError(error, data.room);
+        }
+    });
+    socket.on("startGame", function (data) {
+        try {
+            var room = getTheRoom(data.room);
+            selectTraitor(room);
+            room.isGameStarted = true;
+            updateRoomClient(data.room);
+        }
+        catch (error) {
+            console.error(error);
+            sendError(error, data.room);
+        }
+    });
+    socket.on("stopGame", function (data) {
+        try {
+            var room = getTheRoom(data.room);
+            room.isGameStarted = false;
+            resetTraitor(room);
+            updateRoomClient(data.room);
+        }
+        catch (error) {
+            console.error(error);
+            sendError(error, data.room);
+        }
+    });
+    socket.on("modifyPlayerPts", function (data) {
+        try {
+            var room = getTheRoom(data.room);
+            room.players.find(function (player) { return player.idClient === data.player.idClient; }).pts = data.newValue;
+            updateRoomClient(data.room);
         }
         catch (error) {
             console.error(error);
@@ -304,13 +376,10 @@ io.on("connection", function (socket) {
             sendError(error, data.room);
         }
     });
-    socket.on("resetCagnottes", function (data) {
+    socket.on("revealRole", function (data) {
         try {
             var room = getTheRoom(data.room);
-            room.cagnottes = [
-                { name: "innocent", value: 0 },
-                { name: "traitor", value: 0 },
-            ];
+            room.isRevealRole = data.revealRole;
             updateRoomClient(data.room);
         }
         catch (error) {
@@ -318,44 +387,11 @@ io.on("connection", function (socket) {
             sendError(error, data.room);
         }
     });
-    socket.on("modifyPlayerPts", function (data) {
+    socket.on("changeMode", function (data) {
         try {
             var room = getTheRoom(data.room);
-            room.players.find(function (player) { return player.idClient === data.player.idClient; }).pts = data.newValue;
+            room.mode = data.mode;
             updateRoomClient(data.room);
-        }
-        catch (error) {
-            console.error(error);
-            sendError(error, data.room);
-        }
-    });
-    socket.on("startGame", function (data) {
-        try {
-            var room = getTheRoom(data.room);
-            var realPlayers = getRealPlayers(data.room);
-            if (realPlayers.length > 0) {
-                var randomTraitor_1 = realPlayers[Math.floor(Math.random() * realPlayers.length)];
-                // room.traitorId = randomTraitor.idClient;
-                room.players.find(function (player) { return player == randomTraitor_1; }).isTraitor = true;
-            }
-            room.isGameLaunched = true;
-            updateRoomClient(data.room);
-        }
-        catch (error) {
-            console.error(error);
-            sendError(error, data.room);
-        }
-    });
-    socket.on("stopGame", function (data) {
-        try {
-            var room = getTheRoom(data.room);
-            var playerTraitor = room.players.find(function (player) { return player.isTraitor == true; });
-            if (playerTraitor) {
-                playerTraitor.isTraitor = false;
-                // room.traitorId = "";
-                room.isGameLaunched = false;
-                updateRoomClient(data.room);
-            }
         }
         catch (error) {
             console.error(error);
@@ -378,7 +414,7 @@ io.on("connection", function (socket) {
         try {
             console.log("✉️ votes initiate");
             var room = getTheRoom(data.room);
-            room.mode = "votes";
+            room.mode = "vote";
             // io.in(data.room).emit("launchVoteResponse", {
             //   votesLaunched: room.votesLaunched,
             // });
@@ -438,7 +474,7 @@ io.on("connection", function (socket) {
     //   (data: { room: string; voiceIALaunched: boolean }) => {
     //     try {
     //       console.log("toggle voice IA");
-    //       const room: Room = getTheRoom(data.room);
+    //       const room: RoomType = getTheRoom(data.room);
     //       room.voiceIALaunched = !data.voiceIALaunched;
     //       io.in(data.room).emit("toggleLauncheVoiceIaResponse", {
     //         voiceIALaunched: room.voiceIALaunched,
@@ -454,7 +490,7 @@ io.on("connection", function (socket) {
     //   (data: { room: string; voiceIAVoicePlayed: boolean }) => {
     //     try {
     //       console.log("toggle play voice IA");
-    //       const room: Room = getTheRoom(data.room);
+    //       const room: RoomType = getTheRoom(data.room);
     //       room.voiceIAVoicePlayed = !data.voiceIAVoicePlayed;
     //       io.in(data.room).emit("toggleVoiceIAVoicePlayedResponse", {
     //         voiceIAVoicePlayed: room.voiceIAVoicePlayed,
