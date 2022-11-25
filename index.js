@@ -5,21 +5,13 @@ exports.getMostVotedPlayer = exports.findOcc = exports.getRealPlayers = exports.
 var PORT = process.env.port || 6602;
 var options = {
     cors: {
-        origin: [
-            "http://judas.r-selwa.space",
-            "https://judas.r-selwa.space",
-            "https://judas.r-selwa.space/",
-            "http://localhost:5173",
-            "*",
-        ],
+        origin: "*",
         methods: ["GET", "POST"]
     }
 };
 var app = require("express")();
 var httpServer = require("http").createServer(app);
-// const io = require("socket.io")(httpServer);
 var io = require("socket.io")(httpServer, options);
-// const axios = require("axios");
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Methods", "GET,POST");

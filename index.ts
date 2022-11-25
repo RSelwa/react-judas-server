@@ -5,21 +5,13 @@ const PORT = process.env.port || 6602;
 
 const options = {
   cors: {
-    origin: [
-      "http://judas.r-selwa.space",
-      "https://judas.r-selwa.space",
-      "https://judas.r-selwa.space/",
-      "http://localhost:5173",
-      "*",
-    ],
+    origin: "*",
     methods: ["GET", "POST"],
   },
 };
 const app = require("express")();
 const httpServer = require("http").createServer(app);
-// const io = require("socket.io")(httpServer);
 const io = require("socket.io")(httpServer, options);
-// const axios = require("axios");
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET,POST");
