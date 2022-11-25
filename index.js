@@ -682,5 +682,5 @@ io.on("connection", function (socket) {
 //   }
 // );
 httpServer.listen(PORT, function () {
-    console.log("\uD83D\uDE80 server is listening on port ".concat(PORT));
+    console.log("\uD83D\uDE80 server is listenings on port ".concat(PORT));
 });

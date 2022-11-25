@@ -787,5 +787,5 @@ io.on("connection", (socket) => {
 //   }
 // );
 httpServer.listen(PORT, () => {
-  console.log(`🚀 server is listening on port ${PORT}`);
+  console.log(`🚀 server is listenings on port ${PORT}`);
 });
