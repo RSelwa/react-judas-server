@@ -3,6 +3,7 @@ exports.__esModule = true;
 exports.getMostVotedPlayer = exports.findOcc = exports.getRealPlayers = exports.getTheRoom = exports.getPlayerByIdClient = exports.getClientByID = void 0;
 //#region socket
 var PORT = process.env.port || 6602;
+var LOCAL_ADDRESS = process.env.port || "0.0.0.0";
 var options = {
     cors: {
         origin: "*",
@@ -681,6 +682,6 @@ io.on("connection", function (socket) {
 //     );
 //   }
 // );
-httpServer.listen(PORT, function () {
+httpServer.listen(PORT, LOCAL_ADDRESS, function () {
     console.log("\uD83D\uDE80 server is listenings on port ".concat(PORT));
 });

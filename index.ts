@@ -4,6 +4,7 @@ import { Server } from "socket.io";
 
 //#region socket
 const PORT = process.env.port || 6602;
+const LOCAL_ADDRESS = process.env.port || "0.0.0.0";
 
 const options = {
   cors: {
@@ -786,6 +787,6 @@ io.on("connection", (socket) => {
 //     );
 //   }
 // );
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, LOCAL_ADDRESS, () => {
   console.log(`🚀 server is listenings on port ${PORT}`);
 });
