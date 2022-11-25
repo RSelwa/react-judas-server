@@ -14,9 +14,6 @@ var httpServer = require("http").createServer(app);
 var io = require("socket.io")(httpServer, options);
 // const httpServer = createServer();
 // const io = new Server(httpServer, options);
-app.listen(process.env.ALWAYSDATA_HTTPD_PORT, process.env.ALWAYSDATA_HTTPD_IP, function () {
-    console.log("test");
-});
 app.get("/", function (req, res) {
     res.send("Hello World! I'm a react server" + PORT);
 });
@@ -675,6 +672,9 @@ io.on("connection", function (socket) {
         }
     });
 });
-httpServer.listen(PORT, function () {
-    console.log("\uD83D\uDE80 server is listening on port ".concat(PORT));
+httpServer.listen(process.env.ALWAYSDATA_HTTPD_PORT, process.env.ALWAYSDATA_HTTPD_IP, function () {
+    console.log("\uD83D\uDE80 server is listening on port ".concat(process.env.ALWAYSDATA_HTTPD_PORT));
 });
+// httpServer.listen(PORT, () => {
+//   console.log(`🚀 server is listening on port ${PORT}`);
+// });
