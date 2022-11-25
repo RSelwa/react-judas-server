@@ -2,6 +2,7 @@ import { Cagnotte, Player, Room, VoiceIA, Vote } from "./Type";
 
 //#region socket
 const PORT = process.env.port || 6602;
+
 const options = {
   cors: {
     origin: [
@@ -18,6 +19,9 @@ const httpServer = require("http").createServer(app);
 // const io = require("socket.io")(httpServer);
 const io = require("socket.io")(httpServer, options);
 const axios = require("axios");
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+});
 app.get("/", (req, res) => {
   res.send("Hello World! I'm a react server");
 });
