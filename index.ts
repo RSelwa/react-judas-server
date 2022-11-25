@@ -281,16 +281,17 @@ io.on("connection", (socket) => {
               { name: "innocent", value: 0 },
               { name: "traitor", value: 0 },
             ],
+            mode: "",
             votes: [],
-            votesLaunched: false,
-            questionsLaunched: false,
+            // votesLaunched: false,
+            // questionsLaunched: false,
             isRevealRole: false,
             // traitorId: "",
 
             revealAnswerQuestion: false,
-            voiceIALaunched: false,
-            justePrixLaunched: false,
-            voiceIAVoicePlayed: false,
+            // voiceIALaunched: false,
+            // justePrixLaunched: false,
+            // voiceIAVoicePlayed: false,
             revealVoiceIAAnswer: false,
           });
         }
@@ -444,13 +445,14 @@ io.on("connection", (socket) => {
     try {
       console.log("✉️ votes initiate");
       const room: Room = getTheRoom(data.room);
-      room.votesLaunched = true;
-      io.in(data.room).emit("launchVoteResponse", {
-        votesLaunched: room.votesLaunched,
-      });
-      io.in(data.room).emit("sendPLayersForVOtes", {
-        playersForVotes: getRealPlayers(data.room),
-      });
+      room.mode = "votes";
+      // io.in(data.room).emit("launchVoteResponse", {
+      //   votesLaunched: room.votesLaunched,
+      // });
+      // io.in(data.room).emit("sendPLayersForVOtes", {
+      //   playersForVotes: getRealPlayers(data.room),
+      // });
+      updateRoomClient(data.room);
     } catch (error) {
       console.error(error);
       sendError(error, data.room);
@@ -461,7 +463,7 @@ io.on("connection", (socket) => {
     try {
       console.log("❌ votes stop");
       const room: Room = getTheRoom(data.room);
-      room.votesLaunched = false;
+      room.mode = "";
       room.votes = [];
       updatesVotes(data.room);
       room.players.forEach((player: Player) => {
@@ -469,16 +471,17 @@ io.on("connection", (socket) => {
         player.voteConfirmed = false;
       });
       updatePlayers(data.room);
-      io.in(data.room).emit("stopVoteResponse", {
-        votesLaunched: room.votesLaunched,
-      });
-      io.in(data.room).emit("reinitiateVoteResposne", {
-        hasVoted: false,
-        voteConfirmed: false,
-      });
-      io.in(data.room).emit("everyOneHaseveryOneHasConfirmedVoteResponse", {
-        everyOneHasConfirmedVote: false,
-      });
+      // io.in(data.room).emit("stopVoteResponse", {
+      //   votesLaunched: room.votesLaunched,
+      // });
+      // io.in(data.room).emit("reinitiateVoteResposne", {
+      //   hasVoted: false,
+      //   voteConfirmed: false,
+      // });
+      // io.in(data.room).emit("everyOneHaseveryOneHasConfirmedVoteResponse", {
+      //   everyOneHasConfirmedVote: false,
+      // });
+      updateRoomClient(data.room);
     } catch (error) {
       console.error(error);
       sendError(error, data.room);
@@ -491,10 +494,8 @@ io.on("connection", (socket) => {
       try {
         console.log(data.questionsLaunched);
         const room: Room = getTheRoom(data.room);
-        room.questionsLaunched = !data.questionsLaunched;
-        io.in(data.room).emit("toggleLaunchQuestionsResponse", {
-          launchedQuestions: room.questionsLaunched,
-        });
+        room.mode = "questions";
+        updateRoomClient(data.room);
       } catch (error) {
         console.error(error);
         sendError(error, data.room);
@@ -502,39 +503,39 @@ io.on("connection", (socket) => {
     }
   );
 
-  socket.on(
-    "toggleLauncheVoiceIa",
-    (data: { room: string; voiceIALaunched: boolean }) => {
-      try {
-        console.log("toggle voice IA");
-        const room: Room = getTheRoom(data.room);
-        room.voiceIALaunched = !data.voiceIALaunched;
-        io.in(data.room).emit("toggleLauncheVoiceIaResponse", {
-          voiceIALaunched: room.voiceIALaunched,
-        });
-      } catch (error) {
-        console.error(error);
-        sendError(error, data.room);
-      }
-    }
-  );
+  // socket.on(
+  //   "toggleLauncheVoiceIa",
+  //   (data: { room: string; voiceIALaunched: boolean }) => {
+  //     try {
+  //       console.log("toggle voice IA");
+  //       const room: Room = getTheRoom(data.room);
+  //       room.voiceIALaunched = !data.voiceIALaunched;
+  //       io.in(data.room).emit("toggleLauncheVoiceIaResponse", {
+  //         voiceIALaunched: room.voiceIALaunched,
+  //       });
+  //     } catch (error) {
+  //       console.error(error);
+  //       sendError(error, data.room);
+  //     }
+  //   }
+  // );
 
-  socket.on(
-    "toggleVoiceIAVoicePlayed",
-    (data: { room: string; voiceIAVoicePlayed: boolean }) => {
-      try {
-        console.log("toggle play voice IA");
-        const room: Room = getTheRoom(data.room);
-        room.voiceIAVoicePlayed = !data.voiceIAVoicePlayed;
-        io.in(data.room).emit("toggleVoiceIAVoicePlayedResponse", {
-          voiceIAVoicePlayed: room.voiceIAVoicePlayed,
-        });
-      } catch (error) {
-        console.error(error);
-        sendError(error, data.room);
-      }
-    }
-  );
+  // socket.on(
+  //   "toggleVoiceIAVoicePlayed",
+  //   (data: { room: string; voiceIAVoicePlayed: boolean }) => {
+  //     try {
+  //       console.log("toggle play voice IA");
+  //       const room: Room = getTheRoom(data.room);
+  //       room.voiceIAVoicePlayed = !data.voiceIAVoicePlayed;
+  //       io.in(data.room).emit("toggleVoiceIAVoicePlayedResponse", {
+  //         voiceIAVoicePlayed: room.voiceIAVoicePlayed,
+  //       });
+  //     } catch (error) {
+  //       console.error(error);
+  //       sendError(error, data.room);
+  //     }
+  //   }
+  // );
 
   socket.on(
     "selectVoiceIA",
