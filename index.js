@@ -40,7 +40,7 @@ exports.getTheRoom = getTheRoom;
 function getRealPlayers(dataRoom) {
     var room = getTheRoom(dataRoom);
     if (room) {
-        return room.players.filter(function (player) { return !player.isController && !player.isViewer; });
+        return room.players.filter(function (player) { return player.role === "player"; });
     }
 }
 exports.getRealPlayers = getRealPlayers;
@@ -234,11 +234,10 @@ io.on("connection", function (socket) {
                 ptsCagnotte: 0,
                 hasVoted: false,
                 voteConfirmed: false,
-                //! name == "c" for easy debug
-                // isController:  data.controller,
-                isController: data.name === "c" || data.controller,
-                //! name == "v" for easy debug
-                isViewer: data.name === "v" || data.viewer
+                role: ((data.name === "c" || (data.controller && "admin")) && "admin") ||
+                    ((data.name === "v" || (data.controller && "viewer")) &&
+                        "viewer") ||
+                    "player"
             };
             clients.push(newPlayer);
             socket.emit("joinNameResponse", {

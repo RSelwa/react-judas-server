@@ -56,7 +56,7 @@ export function getRealPlayers(dataRoom: string): PlayerType[] {
   const room: RoomType = getTheRoom(dataRoom);
   if (room) {
     return room.players.filter(
-      (player: PlayerType) => !player.isController && !player.isViewer
+      (player: PlayerType) => player.role === "player"
     );
   }
 }
@@ -293,13 +293,11 @@ io.on("connection", (socket) => {
           ptsCagnotte: 0,
           hasVoted: false,
           voteConfirmed: false,
-          //! name == "c" for easy debug
-          // isController:  data.controller,
-          isController: data.name === "c" || data.controller,
-
-          //! name == "v" for easy debug
-          isViewer: data.name === "v" || data.viewer,
-          // isViewer: data.viewer,
+          role:
+            ((data.name === "c" || (data.controller && "admin")) && "admin") ||
+            ((data.name === "v" || (data.controller && "viewer")) &&
+              "viewer") ||
+            "player",
         };
         clients.push(newPlayer);
         socket.emit("joinNameResponse", {

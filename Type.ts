@@ -9,8 +9,10 @@ export type PlayerType = {
   ptsCagnotte: number;
   hasVoted: boolean;
   voteConfirmed: boolean;
-  isController: boolean;
-  isViewer: boolean;
+  role: "player" | "viewer" | "admin";
+
+  // isController: boolean;
+  // isViewer: boolean;
 };
 export type CagnotteType = {
   name: "innocent" | "traitor";
