@@ -1,10 +1,11 @@
 export type PlayerRoleType = "player" | "streamer" | "viewer" | "admin";
+export type AvatarNameType = "catcheur" | "alien";
 
 export type VoiceIAType = { voice: string; text: string; answer: string };
 export type PlayerType = {
   idServer?: string;
   idClient?: string;
-  avatarName: "catcheur" | "alien";
+  avatarName: AvatarNameType;
 
   room: string;
   name: string;
