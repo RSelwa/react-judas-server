@@ -276,7 +276,7 @@ io.on("connection", (socket) => {
       name: string;
       idClient: string;
       controller: boolean;
-      viewer: boolean;
+      streamer: boolean;
     }) => {
       try {
         if (clients.some((client) => client.idClient === data.idClient)) {
@@ -288,6 +288,8 @@ io.on("connection", (socket) => {
           idClient: data.idClient,
           room: data.room,
           name: data.name,
+          avatarName: "alien",
+
           pts: 0,
           isTraitor: false,
           ptsCagnotte: 0,
@@ -295,8 +297,8 @@ io.on("connection", (socket) => {
           voteConfirmed: false,
           role:
             ((data.name === "c" || (data.controller && "admin")) && "admin") ||
-            ((data.name === "v" || (data.controller && "viewer")) &&
-              "viewer") ||
+            ((data.name === "v" || (data.controller && "streamer")) &&
+              "streamer") ||
             "player",
         };
         clients.push(newPlayer);
@@ -306,13 +308,15 @@ io.on("connection", (socket) => {
           player: newPlayer,
         });
         data.controller && socket.emit("joinControllerResponse", {});
-        data.viewer && socket.emit("joinViewerResponse", {});
+        data.streamer && socket.emit("joinViewerResponse", {});
         !data.controller &&
-          !data.viewer &&
+          !data.streamer &&
           socket.emit("joinPlayerResponse", {});
 
         //# initiate the room if doesn't exist yet
         if (!rooms.find((e) => e.id == data.room)) {
+          console.log("initiate room");
+
           rooms.push({
             id: data.room,
             isGameLaunched: false,

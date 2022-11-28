@@ -229,14 +229,15 @@ io.on("connection", function (socket) {
                 idClient: data.idClient,
                 room: data.room,
                 name: data.name,
+                avatarName: "alien",
                 pts: 0,
                 isTraitor: false,
                 ptsCagnotte: 0,
                 hasVoted: false,
                 voteConfirmed: false,
                 role: ((data.name === "c" || (data.controller && "admin")) && "admin") ||
-                    ((data.name === "v" || (data.controller && "viewer")) &&
-                        "viewer") ||
+                    ((data.name === "v" || (data.controller && "streamer")) &&
+                        "streamer") ||
                     "player"
             };
             clients.push(newPlayer);
@@ -246,12 +247,13 @@ io.on("connection", function (socket) {
                 player: newPlayer
             });
             data.controller && socket.emit("joinControllerResponse", {});
-            data.viewer && socket.emit("joinViewerResponse", {});
+            data.streamer && socket.emit("joinViewerResponse", {});
             !data.controller &&
-                !data.viewer &&
+                !data.streamer &&
                 socket.emit("joinPlayerResponse", {});
             //# initiate the room if doesn't exist yet
             if (!rooms.find(function (e) { return e.id == data.room; })) {
+                console.log("initiate room");
                 rooms.push({
                     id: data.room,
                     isGameLaunched: false,

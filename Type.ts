@@ -1,7 +1,11 @@
+export type PlayerRoleType = "player" | "streamer" | "viewer" | "admin";
+
 export type VoiceIAType = { voice: string; text: string; answer: string };
 export type PlayerType = {
   idServer?: string;
   idClient?: string;
+  avatarName: "catcheur" | "alien";
+
   room: string;
   name: string;
   pts: number;
@@ -9,7 +13,7 @@ export type PlayerType = {
   ptsCagnotte: number;
   hasVoted: boolean;
   voteConfirmed: boolean;
-  role: "player" | "viewer" | "admin";
+  role: PlayerRoleType;
 
   // isController: boolean;
   // isViewer: boolean;
