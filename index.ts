@@ -1,9 +1,11 @@
 import {
+  AvatarNameType,
   CagnotteType,
   ModeType,
   PlayerType,
+  QuestionType,
   RoomType,
-  VoiceIAType,
+  // VoiceIAType,
   VoteType,
 } from "./Type";
 import { createServer } from "http";
@@ -228,8 +230,19 @@ io.on("connection", (socket) => {
     }
   };
 
+  const resetModes = (room: RoomType) => {
+    room.justePrixMode.indexJustePrix = 0;
+    room.justePrixMode.isShowResponse = false;
+
+    room.questionsMode.indexQuestion = 0;
+    room.questionsMode.isShowResponse = false;
+
+    updateRoomClient(room.id);
+  };
+
   //#endregion
 
+  //#region Lobby and game handler
   socket.on("test", (data: { room: string; mes: string }) => {
     try {
       console.log("test");
@@ -277,6 +290,9 @@ io.on("connection", (socket) => {
       idClient: string;
       controller: boolean;
       streamer: boolean;
+      avatar: AvatarNameType;
+      questionsList: QuestionType[];
+      justePrixList: QuestionType[];
     }) => {
       try {
         if (clients.some((client) => client.idClient === data.idClient)) {
@@ -288,7 +304,7 @@ io.on("connection", (socket) => {
           idClient: data.idClient,
           room: data.room,
           name: data.name,
-          avatarName: "alien",
+          avatarName: data.avatar,
 
           pts: 0,
           isTraitor: false,
@@ -297,21 +313,14 @@ io.on("connection", (socket) => {
           voteConfirmed: false,
           role:
             ((data.name === "c" || (data.controller && "admin")) && "admin") ||
-            ((data.name === "v" || (data.controller && "streamer")) &&
+            ((data.name === "v" || (data.streamer && "streamer")) &&
               "streamer") ||
+            (getTheRoom(data.room)?.players.filter((p) => p.role === "player")
+              .length >= 4 &&
+              "viewer") ||
             "player",
         };
         clients.push(newPlayer);
-        socket.emit("joinNameResponse", {
-          name: data.name,
-          room: data.room,
-          player: newPlayer,
-        });
-        data.controller && socket.emit("joinControllerResponse", {});
-        data.streamer && socket.emit("joinViewerResponse", {});
-        !data.controller &&
-          !data.streamer &&
-          socket.emit("joinPlayerResponse", {});
 
         //# initiate the room if doesn't exist yet
         if (!rooms.find((e) => e.id == data.room)) {
@@ -328,16 +337,19 @@ io.on("connection", (socket) => {
             ],
             mode: "",
             votes: [],
-            // votesLaunched: false,
-            // questionsLaunched: false,
             isRevealRole: false,
-            // traitorId: "",
-
             revealAnswerQuestion: false,
-            // voiceIALaunched: false,
-            // justePrixLaunched: false,
-            // voiceIAVoicePlayed: false,
             revealVoiceIAAnswer: false,
+            questionsMode: {
+              indexQuestion: 0,
+              isShowResponse: false,
+              questionsList: data.questionsList,
+            },
+            justePrixMode: {
+              indexJustePrix: 0,
+              isShowResponse: false,
+              justePrixList: data.justePrixList,
+            },
           });
         }
         rooms.find((e) => e.id == data.room).players.push(newPlayer);
@@ -416,6 +428,9 @@ io.on("connection", (socket) => {
       sendError(error, data.room);
     }
   });
+  //#endregion
+
+  //#region Room
   socket.on(
     "modifyPlayerPts",
     (data: { room: string; player: PlayerType; newValue: number }) => {
@@ -471,6 +486,7 @@ io.on("connection", (socket) => {
   socket.on("changeMode", (data: { room: string; mode: ModeType }) => {
     try {
       const room: RoomType = getTheRoom(data.room);
+      resetModes(room);
       room.mode = data.mode;
       updateRoomClient(data.room);
     } catch (error) {
@@ -478,72 +494,39 @@ io.on("connection", (socket) => {
       sendError(error, data.room);
     }
   });
-  socket.on("toggleGameStatus", (data: { room: string; isInGame: boolean }) => {
-    try {
-      io.in(data.room).emit("statusGameResponse", {
-        isInGame: !data.isInGame,
-      });
-      console.log(!data.isInGame ? "🟩 now in game" : "🟥 no game");
-    } catch (error) {
-      console.error(error);
-      sendError(error, data.room);
-    }
-  });
+  //#endregion
 
-  socket.on("launchVote", (data: { room: string }) => {
-    try {
-      console.log("✉️ votes initiate");
-      const room: RoomType = getTheRoom(data.room);
-      room.mode = "vote";
-      // io.in(data.room).emit("launchVoteResponse", {
-      //   votesLaunched: room.votesLaunched,
-      // });
-      // io.in(data.room).emit("sendPLayersForVOtes", {
-      //   playersForVotes: getRealPlayers(data.room),
-      // });
-      updateRoomClient(data.room);
-    } catch (error) {
-      console.error(error);
-      sendError(error, data.room);
-    }
-  });
-
-  socket.on("stopVote", (data: { room: string }) => {
-    try {
-      console.log("❌ votes stop");
-      const room: RoomType = getTheRoom(data.room);
-      room.mode = "";
-      room.votes = [];
-      updatesVotes(data.room);
-      room.players.forEach((player: PlayerType) => {
-        player.hasVoted = false;
-        player.voteConfirmed = false;
-      });
-      updatePlayers(data.room);
-      // io.in(data.room).emit("stopVoteResponse", {
-      //   votesLaunched: room.votesLaunched,
-      // });
-      // io.in(data.room).emit("reinitiateVoteResposne", {
-      //   hasVoted: false,
-      //   voteConfirmed: false,
-      // });
-      // io.in(data.room).emit("everyOneHaseveryOneHasConfirmedVoteResponse", {
-      //   everyOneHasConfirmedVote: false,
-      // });
-      updateRoomClient(data.room);
-    } catch (error) {
-      console.error(error);
-      sendError(error, data.room);
-    }
-  });
+  //#region Questions
 
   socket.on(
-    "toggleLaunchQuestions",
-    (data: { room: string; questionsLaunched: boolean }) => {
+    "questionsAnswerHandler",
+    (data: { room: string; isGoodAnswer: boolean; numberPts: number }) => {
       try {
-        console.log(data.questionsLaunched);
         const room: RoomType = getTheRoom(data.room);
-        room.mode = "questions";
+        if (data.isGoodAnswer) {
+          room.cagnottes.find((c) => c.name === "innocent").value +=
+            data.numberPts;
+        } else {
+          room.cagnottes.find((c) => c.name === "traitor").value +=
+            data.numberPts;
+          room.questionsMode.isShowResponse = true;
+        }
+
+        updateRoomClient(data.room);
+      } catch (error) {
+        console.error(error);
+        sendError(error, data.room);
+      }
+    }
+  );
+  socket.on(
+    "changeQuestions",
+    (data: { room: string; indexQuestions: number }) => {
+      try {
+        const room: RoomType = getTheRoom(data.room);
+        room.questionsMode.isShowResponse = false;
+        room.questionsMode.indexQuestion = data.indexQuestions;
+
         updateRoomClient(data.room);
       } catch (error) {
         console.error(error);
@@ -552,170 +535,81 @@ io.on("connection", (socket) => {
     }
   );
 
-  // socket.on(
-  //   "toggleLauncheVoiceIa",
-  //   (data: { room: string; voiceIALaunched: boolean }) => {
-  //     try {
-  //       console.log("toggle voice IA");
-  //       const room: RoomType = getTheRoom(data.room);
-  //       room.voiceIALaunched = !data.voiceIALaunched;
-  //       io.in(data.room).emit("toggleLauncheVoiceIaResponse", {
-  //         voiceIALaunched: room.voiceIALaunched,
-  //       });
-  //     } catch (error) {
-  //       console.error(error);
-  //       sendError(error, data.room);
-  //     }
-  //   }
-  // );
+  //#endregion
 
-  // socket.on(
-  //   "toggleVoiceIAVoicePlayed",
-  //   (data: { room: string; voiceIAVoicePlayed: boolean }) => {
-  //     try {
-  //       console.log("toggle play voice IA");
-  //       const room: RoomType = getTheRoom(data.room);
-  //       room.voiceIAVoicePlayed = !data.voiceIAVoicePlayed;
-  //       io.in(data.room).emit("toggleVoiceIAVoicePlayedResponse", {
-  //         voiceIAVoicePlayed: room.voiceIAVoicePlayed,
-  //       });
-  //     } catch (error) {
-  //       console.error(error);
-  //       sendError(error, data.room);
-  //     }
-  //   }
-  // );
-
+  //#region Juste prix
   socket.on(
-    "selectVoiceIA",
-    (data: { room: string; selectedVoiceIA: VoiceIAType }) => {
+    "justePrixAnswerHandler",
+    (data: { room: string; isGoodAnswer: boolean; numberPts: number }) => {
       try {
-        console.log(data.selectedVoiceIA);
-        io.in(data.room).emit("selectVoiceIAResponse", {
-          selectedVoiceIA: data.selectedVoiceIA,
-        });
-        //?
-        io.in(data.room).emit("selectVoiceIAResponseAnimation", {});
+        const room: RoomType = getTheRoom(data.room);
+        if (data.isGoodAnswer) {
+          room.cagnottes.find((c) => c.name === "innocent").value +=
+            data.numberPts;
+        } else {
+          room.cagnottes.find((c) => c.name === "traitor").value +=
+            data.numberPts;
+          room.justePrixMode.isShowResponse = true;
+        }
+
+        updateRoomClient(data.room);
       } catch (error) {
         console.error(error);
         sendError(error, data.room);
       }
     }
   );
-
-  socket.on("voiceIAPanelAnimation", (data: { room: string }) => {
-    try {
-      io.in(data.room).emit("voiceIAPanelAnimationZoomOutResponse", {});
-    } catch (error) {
-      console.error(error);
-      sendError(error, data.room);
-    }
-  });
-
   socket.on(
-    "revealVoiceIAAnswer",
-    (data: { room: string; revealVoiceIAAnswer: boolean }) => {
+    "changeJustePrix",
+    (data: { room: string; indexJustePrix: number }) => {
       try {
-        const room = getTheRoom(data.room);
-        room.revealVoiceIAAnswer = data.revealVoiceIAAnswer;
-        io.in(data.room).emit("revealVoiceIAAnswerResponse", {
-          revealVoiceIAAnswer: room.revealVoiceIAAnswer,
-        });
+        console.log(data.indexJustePrix);
+
+        const room: RoomType = getTheRoom(data.room);
+        room.justePrixMode.isShowResponse = false;
+        room.justePrixMode.indexJustePrix = data.indexJustePrix;
+
+        updateRoomClient(data.room);
       } catch (error) {
         console.error(error);
         sendError(error, data.room);
       }
     }
   );
+  //#endregion
 
-  socket.on(
-    "answersVoiceIAAnswer",
-    (data: { room: string; goodAnswer: boolean }) => {
-      try {
-        io.in(data.room).emit("answersVoiceIAAnswerResponse", {
-          goodAnswer: data.goodAnswer,
-        });
-        io.in(data.room).emit("answersVoiceIAAnswerResponseAnimation", {
-          goodAnswer: data.goodAnswer,
-        });
-      } catch (error) {
-        console.error(error);
-        sendError(error, data.room);
-      }
-    }
-  );
-
-  socket.on("unselectVoiceIA", (data: { room: string }) => {
-    try {
-      io.in(data.room).emit("unselectVoiceIAResponse", {
-        selectedVoiceIA: { voice: "", text: "", anwser: "" },
-      });
-    } catch (error) {
-      console.error(error);
-      sendError(error, data.room);
-    }
-  });
-
-  socket.on(
-    "arrowQuestions",
-    (data: {
-      room: string;
-      nextQuestion: boolean;
-      questionsLength: number;
-      numberQuestion: number;
-    }) => {
-      try {
-        console.log(data.nextQuestion);
-        console.log(data.numberQuestion);
-        console.log(data.questionsLength);
-        let newNumberQuestion: number;
-        data.nextQuestion
-          ? data.numberQuestion + 1 == data.questionsLength
-            ? (newNumberQuestion = data.numberQuestion)
-            : (newNumberQuestion = data.numberQuestion + 1)
-          : data.numberQuestion == 0
-          ? (newNumberQuestion = data.numberQuestion)
-          : (newNumberQuestion = data.numberQuestion - 1);
-        io.in(data.room).emit("arrowQuestionsResponse", {
-          newNumberQuestion: newNumberQuestion,
-        });
-      } catch (error) {
-        console.error(error);
-        sendError(error, data.room);
-      }
-    }
-  );
-
+  //#region Vote
   socket.on(
     "vote",
-    (data: { room: string; playerVotedFor: PlayerType; clientId: string }) => {
+    (data: {
+      room: string;
+      playerWhoVoted: PlayerType;
+      playerVotedFor: PlayerType;
+    }) => {
       try {
         console.log("📩 vote received");
         const room: RoomType = getTheRoom(data.room);
-        const realPlayers: PlayerType[] = getRealPlayers(data.room);
-        if (realPlayers) {
-          const from: PlayerType = realPlayers.find(
-            (player: PlayerType) => player.idClient == data.clientId
+
+        const voteAlreadyExist: boolean = room.votes.some(
+          (vote: VoteType) =>
+            vote.from.idClient === data.playerWhoVoted.idClient
+        );
+
+        if (voteAlreadyExist) {
+          const voteindex: number = room.votes.findIndex(
+            (vote: VoteType) =>
+              vote.from.idClient === data.playerWhoVoted.idClient
           );
-          const to: PlayerType = data.playerVotedFor;
-          const voteAlreadyExist: VoteType = room.votes.find(
-            (vote: VoteType) => vote.from == from
-          );
-          if (!voteAlreadyExist) {
-            console.log("doesn exist");
-            room.votes.push({ from: from, to: to, confirm: false });
-          } else {
-            const voteindex: number = room.votes.findIndex(
-              (vote: VoteType) => vote.from == from
-            );
-            room.votes[voteindex].to = to;
-          }
-          from.hasVoted = true;
-          updatesVotes(data.room);
-          socket.emit("hasVotedResponse", {
-            hasVoted: from.hasVoted,
+          room.votes[voteindex].to = data.playerVotedFor;
+        } else {
+          console.log("doesn exist");
+          room.votes.push({
+            from: data.playerWhoVoted,
+            to: data.playerVotedFor,
+            confirm: false,
           });
         }
+        updateRoomClient(data.room);
       } catch (error) {
         console.error(error);
         sendError(error, data.room);
@@ -780,63 +674,20 @@ io.on("connection", (socket) => {
       sendError(error, data.room);
     }
   });
+  //#endregion
 
-  socket.on("playAudio", (data: { room: string; audio: string }) => {
-    try {
-      // socket.on("playAudio", (data: { room: string; audio: HTMLAudioElement }) => {
-      io.in(data.room).emit("playAudioResponse", {
-        audio: data.audio,
-      });
-    } catch (error) {
-      console.error(error);
-      sendError(error, data.room);
-    }
-  });
-  socket.on("stopAudio", (data: { room: string }) => {
-    try {
-      console.log("stop audio");
-      io.in(data.room).emit("stopAudioResponse", {});
-    } catch (error) {
-      console.error(error);
-      sendError(error, data.room);
-    }
-  });
-  socket.on("volumeAudio", (data: { room: string; volume: number }) => {
-    try {
-      console.log(data.volume);
-      socket.emit("volumeAudioResponse", {
-        volume: data.volume,
-      });
-    } catch (error) {
-      console.error(error);
-      sendError(error, data.room);
-    }
-  });
+  // socket.on("default", (data: { room: string }) => {
+  //   try {
+  //     const room: RoomType = getTheRoom(data.room);
 
-  socket.on(
-    "toggleRevealAnswer",
-    (data: { room: string; revealAnswer: boolean }) => {
-      try {
-        io.in(data.room).emit("toggleRevealAnswerResponse", {
-          revealAnswer: !data.revealAnswer,
-        });
-      } catch (error) {
-        console.error(error);
-        sendError(error, data.room);
-      }
-    }
-  );
+  //     updateRoomClient(data.room);
+  //   } catch (error) {
+  //     console.error(error);
+  //     sendError(error, data.room);
+  //   }
+  // });
 });
 
-// httpServer.listen(
-//   process.env.ALWAYSDATA_HTTPD_PORT,
-//   process.env.ALWAYSDATA_HTTPD_IP,
-//   () => {
-//     console.log(
-//       `🚀 server is listening on port ${process.env.ALWAYSDATA_HTTPD_PORT}`
-//     );
-//   }
-// );
 httpServer.listen(PORT, LOCAL_ADDRESS, () => {
   console.log(`🚀 server is listenings on port ${PORT}`);
 });
