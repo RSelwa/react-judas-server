@@ -13,7 +13,8 @@ import { Server } from "socket.io";
 
 //#region socket
 const PORT = process.env.port || 6602;
-const LOCAL_ADDRESS = process.env.port || "0.0.0.0";
+// const LOCAL_ADDRESS = process.env.port || "0.0.0.0";
+const LOCAL_ADDRESS = process.env.port || "127.0.0.1";
 
 const options = {
   cors: {
