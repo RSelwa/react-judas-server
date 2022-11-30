@@ -3,8 +3,8 @@ exports.__esModule = true;
 exports.getMostVotedPlayer = exports.findOcc = exports.getRealPlayers = exports.getTheRoom = exports.getPlayerByIdClient = exports.getClientByID = void 0;
 //#region socket
 var PORT = process.env.port || 6602;
-// const LOCAL_ADDRESS = process.env.port || "0.0.0.0";
-var LOCAL_ADDRESS = process.env.port || "127.0.0.1";
+var LOCAL_ADDRESS = process.env.port || "0.0.0.0";
+// const LOCAL_ADDRESS = process.env.port || "127.0.0.1";
 var options = {
     cors: {
         origin: "*",
