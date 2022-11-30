@@ -289,6 +289,7 @@ io.on("connection", (socket) => {
       name: string;
       idClient: string;
       controller: boolean;
+      viewer: boolean;
       streamer: boolean;
       avatar: AvatarNameType;
       questionsList: QuestionType[];
@@ -313,10 +314,12 @@ io.on("connection", (socket) => {
           voteConfirmed: false,
           role:
             ((data.name === "c" || (data.controller && "admin")) && "admin") ||
-            ((data.name === "v" || (data.streamer && "streamer")) &&
+            ((data.name === "s" || (data.streamer && "streamer")) &&
               "streamer") ||
-            (getTheRoom(data.room)?.players.filter((p) => p.role === "player")
-              .length >= 4 &&
+            ((data.name === "v" ||
+              getTheRoom(data.room)?.players.filter((p) => p.role === "player")
+                .length >= 4 ||
+              data.viewer) &&
               "viewer") ||
             "player",
         };

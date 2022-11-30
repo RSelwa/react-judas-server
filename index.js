@@ -245,9 +245,11 @@ io.on("connection", function (socket) {
                 hasVoted: false,
                 voteConfirmed: false,
                 role: ((data.name === "c" || (data.controller && "admin")) && "admin") ||
-                    ((data.name === "v" || (data.streamer && "streamer")) &&
+                    ((data.name === "s" || (data.streamer && "streamer")) &&
                         "streamer") ||
-                    (((_a = getTheRoom(data.room)) === null || _a === void 0 ? void 0 : _a.players.filter(function (p) { return p.role === "player"; }).length) >= 4 &&
+                    ((data.name === "v" ||
+                        ((_a = getTheRoom(data.room)) === null || _a === void 0 ? void 0 : _a.players.filter(function (p) { return p.role === "player"; }).length) >= 4 ||
+                        data.viewer) &&
                         "viewer") ||
                     "player"
             };

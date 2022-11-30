@@ -54,6 +54,12 @@ export type QuestionType = {
   response: string;
   numberOfSubs: number;
 };
+export type QuestionsFilmType = {
+  film: string;
+  numberOfSubs: number;
+};
+
+export type AvatarJsonType = { name: string; value: any };
 
 export type AvatarNameType =
   | "catcheur"
