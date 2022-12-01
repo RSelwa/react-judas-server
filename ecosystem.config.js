@@ -2,8 +2,7 @@ module.exports = {
   apps: [
     {
       script: "index.js",
-      // watch: ".",
-      watch: true,
+      watch: ".",
     },
     // {
     //   script: "./service-worker/",
