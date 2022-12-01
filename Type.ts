@@ -15,9 +15,14 @@ export type RoomType = {
     questionsList: QuestionType[];
   };
   justePrixMode: {
+    justePrixList: QuestionType[];
     indexJustePrix: number;
     isShowResponse: boolean;
-    justePrixList: QuestionType[];
+  };
+  filmsMode: {
+    filmsQuestions: QuestionsFilmType[];
+    indexJustePrix: number;
+    playerToHide?: PlayerType;
   };
 };
 export type PlayerType = {
@@ -42,7 +47,7 @@ export type CagnotteType = {
   name: "innocent" | "traitor";
   value: number;
 };
-export type ModeType = "" | "questions" | "justePrix" | "voiceIa" | "vote";
+export type ModeType = "" | "questions" | "justePrix";
 
 export type VoteType = {
   from: PlayerType;

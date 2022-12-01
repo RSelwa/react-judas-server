@@ -1,22 +1,26 @@
 module.exports = {
   apps: [
     {
-      script: "api.js",
+      script: "index.js",
+      watch: ".",
     },
-    {
-      script: "worker.js",
-    },
+    // {
+    //   script: "./service-worker/",
+    //   watch: ["./service-worker"],
+    // },
   ],
 
-  // Deployment Configuration
   deploy: {
     production: {
-      user: "ubuntu",
-      host: ["3.90.41.186"],
+      user: "debian",
+      host: "162.19.27.74",
       ref: "origin/master",
       repo: "git@github.com:RSelwa/react-judas-server.git",
-      path: "/var/www/react-judas-server",
-      "post-deploy": "npm install && node index.js",
+      path: "/var/www/html",
+      "pre-deploy-local": "echo 'This is a local executed command'",
+      "post-deploy":
+        "npm install && pm2 reload ecosystem.config.js --env production",
+      "pre-setup": "",
     },
   },
 };

@@ -3,6 +3,7 @@ import {
   CagnotteType,
   ModeType,
   PlayerType,
+  QuestionsFilmType,
   QuestionType,
   RoomType,
   // VoiceIAType,
@@ -294,6 +295,7 @@ io.on("connection", (socket) => {
       streamer: boolean;
       avatar: AvatarNameType;
       questionsList: QuestionType[];
+      filmsList: QuestionsFilmType[];
       justePrixList: QuestionType[];
     }) => {
       try {
@@ -353,6 +355,10 @@ io.on("connection", (socket) => {
               indexJustePrix: 0,
               isShowResponse: false,
               justePrixList: data.justePrixList,
+            },
+            filmsMode: {
+              indexJustePrix: 0,
+              filmsQuestions: data.filmsList,
             },
           });
         }
@@ -426,6 +432,7 @@ io.on("connection", (socket) => {
       const room: RoomType = getTheRoom(data.room);
       room.isGameStarted = false;
       resetTraitor(room);
+      resetModes(room);
       updateRoomClient(data.room);
     } catch (error) {
       console.error(error);
