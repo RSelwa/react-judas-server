@@ -11,6 +11,8 @@ import {
 } from "./Type";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import cors = require("cors");
+// import cors from 'cors'
 
 //#region socket
 const PORT = process.env.port || 6602;
@@ -19,7 +21,7 @@ const LOCAL_ADDRESS = process.env.port || "0.0.0.0";
 
 const options = {
   cors: {
-    origin: ["*", "https://judas.r-selwa.space/"],
+    origin: "*",
     methods: ["GET", "POST"],
   },
 };
@@ -28,7 +30,7 @@ const httpServer = require("http").createServer(app);
 const io = require("socket.io")(httpServer, options);
 // const httpServer = createServer();
 // const io = new Server(httpServer, options);
-
+app.use(cors());
 app.get("/", (req, res) => {
   res.send("Hello World! I'm a react server " + PORT);
 });

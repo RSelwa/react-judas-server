@@ -1,13 +1,15 @@
 "use strict";
 exports.__esModule = true;
 exports.getMostVotedPlayer = exports.findOcc = exports.getRealPlayers = exports.getTheRoom = exports.getPlayerByIdClient = exports.getClientByID = void 0;
+var cors = require("cors");
+// import cors from 'cors'
 //#region socket
 var PORT = process.env.port || 6602;
 var LOCAL_ADDRESS = process.env.port || "0.0.0.0";
 // const LOCAL_ADDRESS = process.env.port || "127.0.0.1";
 var options = {
     cors: {
-        origin: ["*", "https://judas.r-selwa.space/"],
+        origin: "*",
         methods: ["GET", "POST"]
     }
 };
@@ -16,6 +18,7 @@ var httpServer = require("http").createServer(app);
 var io = require("socket.io")(httpServer, options);
 // const httpServer = createServer();
 // const io = new Server(httpServer, options);
+app.use(cors());
 app.get("/", function (req, res) {
     res.send("Hello World! I'm a react server " + PORT);
 });
