@@ -19,7 +19,7 @@ const PORT = process.env.port || 6602;
 const LOCAL_ADDRESS = process.env.port || "0.0.0.0";
 // const LOCAL_ADDRESS = process.env.port || "127.0.0.1";
 
-const options = {
+const options: any = {
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
@@ -30,9 +30,9 @@ const httpServer = require("http").createServer(app);
 const io = require("socket.io")(httpServer, options);
 // const httpServer = createServer();
 // const io = new Server(httpServer, options);
-app.use(cors());
+app.use(cors(options));
 app.get("/", (req, res) => {
-  res.send("Hello World! I'm a react server " + PORT);
+  res.send("Hello World! I'm a react server v1 " + PORT);
 });
 //#endregion
 

@@ -18,9 +18,9 @@ var httpServer = require("http").createServer(app);
 var io = require("socket.io")(httpServer, options);
 // const httpServer = createServer();
 // const io = new Server(httpServer, options);
-app.use(cors());
+app.use(cors(options));
 app.get("/", function (req, res) {
-    res.send("Hello World! I'm a react server " + PORT);
+    res.send("Hello World! I'm a react server v1 " + PORT);
 });
 //#endregion
 //#region functions
