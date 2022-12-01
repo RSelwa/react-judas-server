@@ -19,7 +19,7 @@ module.exports = {
       path: "/var/www/html",
       "pre-deploy-local": "echo 'This is a local executed command'",
       "post-deploy":
-        "npm install && pm2 startOrRestart ecosystem.json --env production",
+        "npm install && pm2 reload ecosystem.json --env production",
       "pre-setup": "",
     },
   },
