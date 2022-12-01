@@ -700,5 +700,5 @@ io.on("connection", (socket) => {
 });
 
 httpServer.listen(PORT, LOCAL_ADDRESS, () => {
-  console.log(`🚀 server is listenings on port ${PORT}`);
+  console.log(`🚀 New server is listenings on port ${PORT}`);
 });
