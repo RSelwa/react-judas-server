@@ -233,11 +233,16 @@ io.on("connection", (socket) => {
   };
 
   const resetModes = (room: RoomType) => {
+    room.mode = "";
+
     room.justePrixMode.indexJustePrix = 0;
     room.justePrixMode.isShowResponse = false;
 
     room.questionsMode.indexQuestion = 0;
     room.questionsMode.isShowResponse = false;
+
+    room.filmsMode.indexFilms = 0;
+    room.filmsMode.playerToHide = null;
 
     updateRoomClient(room.id);
   };
@@ -357,7 +362,7 @@ io.on("connection", (socket) => {
               justePrixList: data.justePrixList,
             },
             filmsMode: {
-              indexJustePrix: 0,
+              indexFilms: 0,
               filmsQuestions: data.filmsList,
             },
           });
@@ -574,8 +579,6 @@ io.on("connection", (socket) => {
     "changeJustePrix",
     (data: { room: string; indexJustePrix: number }) => {
       try {
-        console.log(data.indexJustePrix);
-
         const room: RoomType = getTheRoom(data.room);
         room.justePrixMode.isShowResponse = false;
         room.justePrixMode.indexJustePrix = data.indexJustePrix;
@@ -687,6 +690,53 @@ io.on("connection", (socket) => {
   });
   //#endregion
 
+  //#region Films
+  socket.on(
+    "filmsAnswerHandler",
+    (data: { room: string; isGoodAnswer: boolean; numberPts: number }) => {
+      try {
+        const room: RoomType = getTheRoom(data.room);
+        if (data.isGoodAnswer) {
+          room.cagnottes.find((c) => c.name === "innocent").value +=
+            data.numberPts;
+        } else {
+          room.cagnottes.find((c) => c.name === "traitor").value +=
+            data.numberPts;
+        }
+
+        updateRoomClient(data.room);
+      } catch (error) {
+        console.error(error);
+        sendError(error, data.room);
+      }
+    }
+  );
+  socket.on("changeFilms", (data: { room: string; indexFilms: number }) => {
+    try {
+      const room: RoomType = getTheRoom(data.room);
+      room.filmsMode.indexFilms = data.indexFilms;
+
+      updateRoomClient(data.room);
+    } catch (error) {
+      console.error(error);
+      sendError(error, data.room);
+    }
+  });
+  socket.on(
+    "hidePlayerFilms",
+    (data: { room: string; playerToHide: PlayerType }) => {
+      try {
+        const room: RoomType = getTheRoom(data.room);
+        room.filmsMode.playerToHide = data.playerToHide;
+
+        updateRoomClient(data.room);
+      } catch (error) {
+        console.error(error);
+        sendError(error, data.room);
+      }
+    }
+  );
+  //#endregion
   // socket.on("default", (data: { room: string }) => {
   //   try {
   //     const room: RoomType = getTheRoom(data.room);

@@ -185,10 +185,13 @@ io.on("connection", function (socket) {
         }
     };
     var resetModes = function (room) {
+        room.mode = "";
         room.justePrixMode.indexJustePrix = 0;
         room.justePrixMode.isShowResponse = false;
         room.questionsMode.indexQuestion = 0;
         room.questionsMode.isShowResponse = false;
+        room.filmsMode.indexFilms = 0;
+        room.filmsMode.playerToHide = null;
         updateRoomClient(room.id);
     };
     //#endregion
@@ -284,7 +287,7 @@ io.on("connection", function (socket) {
                         justePrixList: data.justePrixList
                     },
                     filmsMode: {
-                        indexJustePrix: 0,
+                        indexFilms: 0,
                         filmsQuestions: data.filmsList
                     }
                 });
@@ -472,7 +475,6 @@ io.on("connection", function (socket) {
     });
     socket.on("changeJustePrix", function (data) {
         try {
-            console.log(data.indexJustePrix);
             var room = getTheRoom(data.room);
             room.justePrixMode.isShowResponse = false;
             room.justePrixMode.indexJustePrix = data.indexJustePrix;
@@ -562,6 +564,48 @@ io.on("connection", function (socket) {
                 displayVotesResult: true,
                 numberSubWinner: numberSubWinner
             });
+        }
+        catch (error) {
+            console.error(error);
+            sendError(error, data.room);
+        }
+    });
+    //#endregion
+    //#region Films
+    socket.on("filmsAnswerHandler", function (data) {
+        try {
+            var room = getTheRoom(data.room);
+            if (data.isGoodAnswer) {
+                room.cagnottes.find(function (c) { return c.name === "innocent"; }).value +=
+                    data.numberPts;
+            }
+            else {
+                room.cagnottes.find(function (c) { return c.name === "traitor"; }).value +=
+                    data.numberPts;
+            }
+            updateRoomClient(data.room);
+        }
+        catch (error) {
+            console.error(error);
+            sendError(error, data.room);
+        }
+    });
+    socket.on("changeFilms", function (data) {
+        try {
+            var room = getTheRoom(data.room);
+            room.filmsMode.indexFilms = data.indexFilms;
+            updateRoomClient(data.room);
+        }
+        catch (error) {
+            console.error(error);
+            sendError(error, data.room);
+        }
+    });
+    socket.on("hidePlayerFilms", function (data) {
+        try {
+            var room = getTheRoom(data.room);
+            room.filmsMode.playerToHide = data.playerToHide;
+            updateRoomClient(data.room);
         }
         catch (error) {
             console.error(error);

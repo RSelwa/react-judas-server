@@ -21,7 +21,7 @@ export type RoomType = {
   };
   filmsMode: {
     filmsQuestions: QuestionsFilmType[];
-    indexJustePrix: number;
+    indexFilms: number;
     playerToHide?: PlayerType;
   };
 };
@@ -47,7 +47,7 @@ export type CagnotteType = {
   name: "innocent" | "traitor";
   value: number;
 };
-export type ModeType = "" | "questions" | "justePrix";
+export type ModeType = "" | "questions" | "justePrix" | "films";
 
 export type VoteType = {
   from: PlayerType;
