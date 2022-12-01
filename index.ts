@@ -19,7 +19,7 @@ const LOCAL_ADDRESS = process.env.port || "0.0.0.0";
 
 const options = {
   cors: {
-    origin: "*",
+    origin: ["*", "https://judas.r-selwa.space/"],
     methods: ["GET", "POST"],
   },
 };
