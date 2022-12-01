@@ -1,7 +1,6 @@
 "use strict";
 exports.__esModule = true;
 exports.getMostVotedPlayer = exports.findOcc = exports.getRealPlayers = exports.getTheRoom = exports.getPlayerByIdClient = exports.getClientByID = void 0;
-var cors = require("cors");
 // import cors from 'cors'
 //#region socket
 var PORT = process.env.port || 6602;
@@ -18,7 +17,6 @@ var httpServer = require("http").createServer(app);
 var io = require("socket.io")(httpServer, options);
 // const httpServer = createServer();
 // const io = new Server(httpServer, options);
-app.use(cors(options));
 app.get("/", function (req, res) {
     res.send("Hello World! I'm a react server v1 " + PORT);
 });

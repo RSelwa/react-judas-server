@@ -11,7 +11,6 @@ import {
 } from "./Type";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import cors = require("cors");
 // import cors from 'cors'
 
 //#region socket
@@ -30,7 +29,6 @@ const httpServer = require("http").createServer(app);
 const io = require("socket.io")(httpServer, options);
 // const httpServer = createServer();
 // const io = new Server(httpServer, options);
-app.use(cors(options));
 app.get("/", (req, res) => {
   res.send("Hello World! I'm a react server v1 " + PORT);
 });
