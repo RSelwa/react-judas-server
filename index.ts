@@ -10,13 +10,10 @@ import {
   VoteType,
 } from "./Type";
 import { createServer } from "http";
-import { Server } from "socket.io";
-// import cors from 'cors'
 
 //#region socket
 const PORT = process.env.port || 6602;
 const LOCAL_ADDRESS = process.env.port || "0.0.0.0";
-// const LOCAL_ADDRESS = process.env.port || "127.0.0.1";
 
 const options: any = {
   cors: {
@@ -28,7 +25,7 @@ const options: any = {
 };
 const app = require("express")();
 // const httpServer = require("http").createServer(app);
-const httpServer = createServer();
+const httpServer = createServer(app);
 const io = require("socket.io")(httpServer, options);
 // const httpServer = createServer();
 // const io = new Server(httpServer, options);

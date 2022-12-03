@@ -2,11 +2,9 @@
 exports.__esModule = true;
 exports.getMostVotedPlayer = exports.findOcc = exports.getRealPlayers = exports.getTheRoom = exports.getPlayerByIdClient = exports.getClientByID = void 0;
 var http_1 = require("http");
-// import cors from 'cors'
 //#region socket
 var PORT = process.env.port || 6602;
 var LOCAL_ADDRESS = process.env.port || "0.0.0.0";
-// const LOCAL_ADDRESS = process.env.port || "127.0.0.1";
 var options = {
     cors: {
         // origin: "*",
@@ -16,7 +14,7 @@ var options = {
 };
 var app = require("express")();
 // const httpServer = require("http").createServer(app);
-var httpServer = (0, http_1.createServer)();
+var httpServer = (0, http_1.createServer)(app);
 var io = require("socket.io")(httpServer, options);
 // const httpServer = createServer();
 // const io = new Server(httpServer, options);
