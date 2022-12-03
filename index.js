@@ -8,19 +8,16 @@ var LOCAL_ADDRESS = process.env.port || "0.0.0.0";
 var options = {
     cors: {
         // origin: "*",
-        origin: "https://judas.r-selwa.space",
-        allowedHeaders: ["my-custom-header"],
-        credentials: true
+        origin: "https://judas.r-selwa.space"
     }
 };
 var app = require("express")();
 var cors = require("cors");
-app.use(cors());
+app.use(cors(options));
 // const httpServer = require("http").createServer(app);
 var httpServer = (0, http_1.createServer)(app);
-var io = require("socket.io")(httpServer, options);
-// const httpServer = createServer();
-// const io = new Server(httpServer, options);
+var io = require("socket.io")(httpServer);
+// const io = require("socket.io")(httpServer, options);
 app.get("/", function (req, res) {
     res.send("Hello World! I'm a react server v2 " + PORT);
 });

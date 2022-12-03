@@ -19,19 +19,16 @@ const options: any = {
   cors: {
     // origin: "*",
     origin: "https://judas.r-selwa.space",
-    allowedHeaders: ["my-custom-header"],
-    credentials: true,
     // methods: ["GET", "POST"],
   },
 };
 const app = require("express")();
 const cors = require("cors");
-app.use(cors());
+app.use(cors(options));
 // const httpServer = require("http").createServer(app);
 const httpServer = createServer(app);
-const io = require("socket.io")(httpServer, options);
-// const httpServer = createServer();
-// const io = new Server(httpServer, options);
+const io = require("socket.io")(httpServer);
+// const io = require("socket.io")(httpServer, options);
 app.get("/", (req, res) => {
   res.send("Hello World! I'm a react server v2 " + PORT);
 });
