@@ -9,7 +9,8 @@ var LOCAL_ADDRESS = process.env.port || "0.0.0.0";
 // const LOCAL_ADDRESS = process.env.port || "127.0.0.1";
 var options = {
     cors: {
-        origin: "*",
+        // origin: "*",
+        origin: "https://judas.r-selwa.space",
         allowedHeaders: ["authorization"]
     }
 };
