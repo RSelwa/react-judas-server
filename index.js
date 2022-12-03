@@ -7,17 +7,16 @@ var PORT = process.env.port || 6602;
 var LOCAL_ADDRESS = process.env.port || "0.0.0.0";
 var options = {
     cors: {
-        // origin: "*",
-        origin: "https://judas.r-selwa.space"
+        origin: "*"
     }
 };
 var app = require("express")();
-var cors = require("cors");
-app.use(cors(options));
+// const cors = require("cors");
+// app.use(cors(options));
 // const httpServer = require("http").createServer(app);
 var httpServer = (0, http_1.createServer)(app);
-var io = require("socket.io")(httpServer);
-// const io = require("socket.io")(httpServer, options);
+// const io = require("socket.io")(httpServer);
+var io = require("socket.io")(httpServer, options);
 app.get("/", function (req, res) {
     res.send("Hello World! I'm a react server v2 " + PORT);
 });

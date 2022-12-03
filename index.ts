@@ -17,18 +17,18 @@ const LOCAL_ADDRESS = process.env.port || "0.0.0.0";
 
 const options: any = {
   cors: {
-    // origin: "*",
-    origin: "https://judas.r-selwa.space",
+    origin: "*",
+    // origin: "https://judas.r-selwa.space",
     // methods: ["GET", "POST"],
   },
 };
 const app = require("express")();
-const cors = require("cors");
-app.use(cors(options));
+// const cors = require("cors");
+// app.use(cors(options));
 // const httpServer = require("http").createServer(app);
 const httpServer = createServer(app);
-const io = require("socket.io")(httpServer);
-// const io = require("socket.io")(httpServer, options);
+// const io = require("socket.io")(httpServer);
+const io = require("socket.io")(httpServer, options);
 app.get("/", (req, res) => {
   res.send("Hello World! I'm a react server v2 " + PORT);
 });
