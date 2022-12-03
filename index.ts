@@ -25,6 +25,8 @@ const options: any = {
   },
 };
 const app = require("express")();
+const cors = require("cors");
+app.use(cors());
 // const httpServer = require("http").createServer(app);
 const httpServer = createServer(app);
 const io = require("socket.io")(httpServer, options);
