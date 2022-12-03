@@ -10,7 +10,7 @@ var LOCAL_ADDRESS = process.env.port || "0.0.0.0";
 var options = {
     cors: {
         origin: "*",
-        methods: ["GET", "POST"]
+        allowedHeaders: ["authorization"]
     }
 };
 var app = require("express")();
