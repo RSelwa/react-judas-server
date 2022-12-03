@@ -9,7 +9,8 @@ var options = {
     cors: {
         // origin: "*",
         origin: "https://judas.r-selwa.space",
-        allowedHeaders: ["authorization"]
+        allowedHeaders: ["my-custom-header"],
+        credentials: true
     }
 };
 var app = require("express")();

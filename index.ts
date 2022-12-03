@@ -19,7 +19,8 @@ const options: any = {
   cors: {
     // origin: "*",
     origin: "https://judas.r-selwa.space",
-    allowedHeaders: ["authorization"],
+    allowedHeaders: ["my-custom-header"],
+    credentials: true,
     // methods: ["GET", "POST"],
   },
 };
