@@ -25,7 +25,8 @@ const options: any = {
   },
 };
 const app = require("express")();
-const httpServer = require("http").createServer(app);
+// const httpServer = require("http").createServer(app);
+const httpServer = createServer();
 const io = require("socket.io")(httpServer, options);
 // const httpServer = createServer();
 // const io = new Server(httpServer, options);
@@ -749,6 +750,9 @@ io.on("connection", (socket) => {
   // });
 });
 
-httpServer.listen(PORT, LOCAL_ADDRESS, () => {
+httpServer.listen(PORT, () => {
   console.log(`🚀 New server is listenings on port ${PORT}`);
 });
+// httpServer.listen(PORT, LOCAL_ADDRESS, () => {
+//   console.log(`🚀 New server is listenings on port ${PORT}`);
+// });

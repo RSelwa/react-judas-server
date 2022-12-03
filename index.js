@@ -1,6 +1,7 @@
 "use strict";
 exports.__esModule = true;
 exports.getMostVotedPlayer = exports.findOcc = exports.getRealPlayers = exports.getTheRoom = exports.getPlayerByIdClient = exports.getClientByID = void 0;
+var http_1 = require("http");
 // import cors from 'cors'
 //#region socket
 var PORT = process.env.port || 6602;
@@ -13,7 +14,8 @@ var options = {
     }
 };
 var app = require("express")();
-var httpServer = require("http").createServer(app);
+// const httpServer = require("http").createServer(app);
+var httpServer = (0, http_1.createServer)();
 var io = require("socket.io")(httpServer, options);
 // const httpServer = createServer();
 // const io = new Server(httpServer, options);
@@ -623,6 +625,9 @@ io.on("connection", function (socket) {
     //   }
     // });
 });
-httpServer.listen(PORT, LOCAL_ADDRESS, function () {
+httpServer.listen(PORT, function () {
     console.log("\uD83D\uDE80 New server is listenings on port ".concat(PORT));
 });
+// httpServer.listen(PORT, LOCAL_ADDRESS, () => {
+//   console.log(`🚀 New server is listenings on port ${PORT}`);
+// });
