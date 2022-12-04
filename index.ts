@@ -321,8 +321,9 @@ io.on("connection", (socket) => {
           hasVoted: false,
           voteConfirmed: false,
           role:
-            ((data.name === "c" || (data.controller && "admin")) && "admin") ||
-            ((data.name === "s" || (data.streamer && "streamer")) &&
+            ((data.name === "admin" || (data.controller && "admin")) &&
+              "admin") ||
+            ((data.name === "streamer" || (data.streamer && "streamer")) &&
               "streamer") ||
             ((data.name === "v" ||
               getTheRoom(data.room)?.players.filter((p) => p.role === "player")
