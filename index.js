@@ -249,8 +249,9 @@ io.on("connection", function (socket) {
                 ptsCagnotte: 0,
                 hasVoted: false,
                 voteConfirmed: false,
-                role: ((data.name === "c" || (data.controller && "admin")) && "admin") ||
-                    ((data.name === "s" || (data.streamer && "streamer")) &&
+                role: ((data.name === "admin" || (data.controller && "admin")) &&
+                    "admin") ||
+                    ((data.name === "streamer" || (data.streamer && "streamer")) &&
                         "streamer") ||
                     ((data.name === "v" ||
                         ((_a = getTheRoom(data.room)) === null || _a === void 0 ? void 0 : _a.players.filter(function (p) { return p.role === "player"; }).length) >= 4 ||
