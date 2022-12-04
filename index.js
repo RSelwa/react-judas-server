@@ -11,17 +11,15 @@ var options = {
     }
 };
 var app = require("express")();
-// const cors = require("cors");
-// app.use(cors(options));
-// const httpServer = require("http").createServer(app);
 var httpServer = (0, http_1.createServer)(app);
-// const io = require("socket.io")(httpServer);
 var io = require("socket.io")(httpServer, options);
 app.get("/", function (req, res) {
     res.send("Hello World! I'm a react server v2 " + PORT);
 });
 //#endregion
 //#region functions
+var adminNames = ["fly", "flygoow", "flygow"];
+var streamerNames = ["pota", "potatoz"];
 function getClientByID(clientId) {
     //* get the id of the client in all the clients
     var client = clients.find(function (client) { return client.idServer == clientId; });
@@ -249,9 +247,11 @@ io.on("connection", function (socket) {
                 ptsCagnotte: 0,
                 hasVoted: false,
                 voteConfirmed: false,
-                role: ((data.name === "admin" || (data.controller && "admin")) &&
+                role: ((adminNames.some(function (adN) { return adN === data.name.toLowerCase(); }) ||
+                    data.controller) &&
                     "admin") ||
-                    ((data.name === "streamer" || (data.streamer && "streamer")) &&
+                    ((streamerNames.some(function (adN) { return adN === data.name.toLowerCase(); }) ||
+                        data.streamer) &&
                         "streamer") ||
                     ((data.name === "v" ||
                         ((_a = getTheRoom(data.room)) === null || _a === void 0 ? void 0 : _a.players.filter(function (p) { return p.role === "player"; }).length) >= 4 ||

@@ -23,11 +23,8 @@ const options: any = {
   },
 };
 const app = require("express")();
-// const cors = require("cors");
-// app.use(cors(options));
-// const httpServer = require("http").createServer(app);
+
 const httpServer = createServer(app);
-// const io = require("socket.io")(httpServer);
 const io = require("socket.io")(httpServer, options);
 app.get("/", (req, res) => {
   res.send("Hello World! I'm a react server v2 " + PORT);
@@ -35,6 +32,8 @@ app.get("/", (req, res) => {
 //#endregion
 
 //#region functions
+const adminNames: string[] = ["fly", "flygoow", "flygow"];
+const streamerNames: string[] = ["pota", "potatoz"];
 export function getClientByID(clientId: string): PlayerType {
   //* get the id of the client in all the clients
   const client: PlayerType = clients.find(
@@ -321,9 +320,11 @@ io.on("connection", (socket) => {
           hasVoted: false,
           voteConfirmed: false,
           role:
-            ((data.name === "admin" || (data.controller && "admin")) &&
+            ((adminNames.some((adN) => adN === data.name.toLowerCase()) ||
+              data.controller) &&
               "admin") ||
-            ((data.name === "streamer" || (data.streamer && "streamer")) &&
+            ((streamerNames.some((adN) => adN === data.name.toLowerCase()) ||
+              data.streamer) &&
               "streamer") ||
             ((data.name === "v" ||
               getTheRoom(data.room)?.players.filter((p) => p.role === "player")
