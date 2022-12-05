@@ -32,8 +32,8 @@ app.get("/", (req, res) => {
 //#endregion
 
 //#region functions
-const adminNames: string[] = ["fly", "flygoow", "flygow"];
-const streamerNames: string[] = ["pota", "potatoz"];
+const adminNames: string[] = ["c", "fly", "flygoow", "flygow"];
+const streamerNames: string[] = ["s", "pota", "potatoz"];
 export function getClientByID(clientId: string): PlayerType {
   //* get the id of the client in all the clients
   const client: PlayerType = clients.find(

@@ -18,8 +18,8 @@ app.get("/", function (req, res) {
 });
 //#endregion
 //#region functions
-var adminNames = ["fly", "flygoow", "flygow"];
-var streamerNames = ["pota", "potatoz"];
+var adminNames = ["c", "fly", "flygoow", "flygow"];
+var streamerNames = ["s", "pota", "potatoz"];
 function getClientByID(clientId) {
     //* get the id of the client in all the clients
     var client = clients.find(function (client) { return client.idServer == clientId; });
