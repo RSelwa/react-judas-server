@@ -232,7 +232,7 @@ io.on("connection", (socket) => {
   };
 
   const resetModes = (room: RoomType) => {
-    room.mode = "";
+    room.mode = "default";
 
     room.justePrixMode.indexJustePrix = 0;
     room.justePrixMode.isShowResponse = false;
@@ -348,7 +348,7 @@ io.on("connection", (socket) => {
               { name: "innocent", value: 0 },
               { name: "traitor", value: 0 },
             ],
-            mode: "",
+            mode: "default",
             votes: [],
             isRevealRole: false,
             revealAnswerQuestion: false,

@@ -183,7 +183,7 @@ io.on("connection", function (socket) {
         }
     };
     var resetModes = function (room) {
-        room.mode = "";
+        room.mode = "default";
         room.justePrixMode.indexJustePrix = 0;
         room.justePrixMode.isShowResponse = false;
         room.questionsMode.indexQuestion = 0;
@@ -272,7 +272,7 @@ io.on("connection", function (socket) {
                         { name: "innocent", value: 0 },
                         { name: "traitor", value: 0 },
                     ],
-                    mode: "",
+                    mode: "default",
                     votes: [],
                     isRevealRole: false,
                     revealAnswerQuestion: false,

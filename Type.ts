@@ -47,7 +47,7 @@ export type CagnotteType = {
   name: "innocent" | "traitor";
   value: number;
 };
-export type ModeType = "" | "questions" | "justePrix" | "films";
+export type ModeType = "default" | "questions" | "justePrix" | "films";
 
 export type VoteType = {
   from: PlayerType;
