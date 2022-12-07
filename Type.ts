@@ -22,6 +22,7 @@ export type RoomType = {
   filmsMode: {
     filmsQuestions: QuestionsFilmType[];
     indexFilms: number;
+    playerToDescribe?: PlayerType;
     playerToHide?: PlayerType;
   };
 };
