@@ -189,6 +189,7 @@ io.on("connection", function (socket) {
         room.questionsMode.indexQuestion = 0;
         room.questionsMode.isShowResponse = false;
         room.filmsMode.indexFilms = 0;
+        room.filmsMode.playerToDescribe = null;
         room.filmsMode.playerToHide = null;
         updateRoomClient(room.id);
     };
@@ -595,6 +596,17 @@ io.on("connection", function (socket) {
         try {
             var room = getTheRoom(data.room);
             room.filmsMode.indexFilms = data.indexFilms;
+            updateRoomClient(data.room);
+        }
+        catch (error) {
+            console.error(error);
+            sendError(error, data.room);
+        }
+    });
+    socket.on("devinePlayerFilms", function (data) {
+        try {
+            var room = getTheRoom(data.room);
+            room.filmsMode.playerToDescribe = data.playerToDescribe;
             updateRoomClient(data.room);
         }
         catch (error) {

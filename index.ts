@@ -241,6 +241,7 @@ io.on("connection", (socket) => {
     room.questionsMode.isShowResponse = false;
 
     room.filmsMode.indexFilms = 0;
+    room.filmsMode.playerToDescribe = null;
     room.filmsMode.playerToHide = null;
 
     updateRoomClient(room.id);
@@ -724,6 +725,20 @@ io.on("connection", (socket) => {
       sendError(error, data.room);
     }
   });
+  socket.on(
+    "devinePlayerFilms",
+    (data: { room: string; playerToDescribe: PlayerType }) => {
+      try {
+        const room: RoomType = getTheRoom(data.room);
+        room.filmsMode.playerToDescribe = data.playerToDescribe;
+
+        updateRoomClient(data.room);
+      } catch (error) {
+        console.error(error);
+        sendError(error, data.room);
+      }
+    }
+  );
   socket.on(
     "hidePlayerFilms",
     (data: { room: string; playerToHide: PlayerType }) => {
