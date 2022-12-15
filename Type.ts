@@ -55,14 +55,22 @@ export type VoteType = {
   to: PlayerType;
   confirm: boolean;
 };
+export type nav = "questions" | "justePrix" | "films";
+
 export type QuestionType = {
+  id: string;
+  type: nav;
   question: string;
   response: string;
-  numberOfSubs: number;
+  subs: number;
 };
 export type QuestionsFilmType = {
-  film: string;
-  numberOfSubs: number;
+  id: string;
+  type: nav;
+  question: string;
+  response: undefined;
+
+  subs: number;
 };
 
 export type AvatarJsonType = { name: string; value: any };

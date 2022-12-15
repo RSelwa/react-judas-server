@@ -147,21 +147,15 @@ io.on("connection", function (socket) {
             players: getRealPlayers(room)
         });
     }
-    function updateCagnottes(room, cagnotte) {
-        io["in"](room).emit("updateCagnottesResponse", {
-            cagnotte: cagnotte
-        });
+    function updateCagnottes(roomId, cagnotte, newValue) {
+        var room = getTheRoom(roomId);
+        room.cagnottes.find(function (c) { return c.name === cagnotte.name; }).value = newValue;
+        updateRoomClient(roomId);
     }
     function updatesVotes(dataRoom) {
         var room = getTheRoom(dataRoom);
         io["in"](dataRoom).emit("voteResponse", {
             votes: room.votes
-        });
-    }
-    function updatesInRoom(dataRoom) {
-        var room = getTheRoom(dataRoom);
-        socket.emit("statusGameResponse", {
-            isInGame: room.isGameLaunched
         });
     }
     var selectTraitor = function (room) {
@@ -385,13 +379,7 @@ io.on("connection", function (socket) {
     socket.on("modifyCagnottes", function (data) {
         try {
             var room = getTheRoom(data.room);
-            room.cagnottes.find(function (c) { return c.name === data.cagnotteName; }).value =
-                data.newValue;
-            updateRoomClient(data.room);
-            //!
-            // io.in(data.room).emit("globalCagnoteAnimation", {
-            //   animationForInnocent: !data.isCagnottesTraitor,
-            // });
+            updateCagnottes(data.room, room.cagnottes.find(function (c) { return c.name === data.cagnotteName; }), data.newValue);
         }
         catch (error) {
             console.error(error);
@@ -427,13 +415,12 @@ io.on("connection", function (socket) {
         try {
             var room = getTheRoom(data.room);
             if (data.isGoodAnswer) {
-                room.cagnottes.find(function (c) { return c.name === "innocent"; }).value +=
-                    data.numberPts;
+                updateCagnottes(data.room, room.cagnottes.find(function (c) { return c.name === "innocent"; }), room.cagnottes.find(function (c) { return c.name === "innocent"; }).value +
+                    data.numberPts);
             }
             else {
-                room.cagnottes.find(function (c) { return c.name === "traitor"; }).value +=
-                    data.numberPts;
-                room.questionsMode.isShowResponse = true;
+                updateCagnottes(data.room, room.cagnottes.find(function (c) { return c.name === "traitor"; }), room.cagnottes.find(function (c) { return c.name === "traitor"; }).value +
+                    data.numberPts);
             }
             updateRoomClient(data.room);
         }
@@ -460,14 +447,14 @@ io.on("connection", function (socket) {
         try {
             var room = getTheRoom(data.room);
             if (data.isGoodAnswer) {
-                room.cagnottes.find(function (c) { return c.name === "innocent"; }).value +=
-                    data.numberPts;
+                updateCagnottes(data.room, room.cagnottes.find(function (c) { return c.name === "innocent"; }), room.cagnottes.find(function (c) { return c.name === "innocent"; }).value +
+                    data.numberPts);
             }
             else {
-                room.cagnottes.find(function (c) { return c.name === "traitor"; }).value +=
-                    data.numberPts;
-                room.justePrixMode.isShowResponse = true;
+                updateCagnottes(data.room, room.cagnottes.find(function (c) { return c.name === "traitor"; }), room.cagnottes.find(function (c) { return c.name === "traitor"; }).value +
+                    data.numberPts);
             }
+            console.log(typeof room.cagnottes.values);
             updateRoomClient(data.room);
         }
         catch (error) {
@@ -578,12 +565,12 @@ io.on("connection", function (socket) {
         try {
             var room = getTheRoom(data.room);
             if (data.isGoodAnswer) {
-                room.cagnottes.find(function (c) { return c.name === "innocent"; }).value +=
-                    data.numberPts;
+                updateCagnottes(data.room, room.cagnottes.find(function (c) { return c.name === "innocent"; }), room.cagnottes.find(function (c) { return c.name === "innocent"; }).value +
+                    data.numberPts);
             }
             else {
-                room.cagnottes.find(function (c) { return c.name === "traitor"; }).value +=
-                    data.numberPts;
+                updateCagnottes(data.room, room.cagnottes.find(function (c) { return c.name === "traitor"; }), room.cagnottes.find(function (c) { return c.name === "traitor"; }).value +
+                    data.numberPts);
             }
             updateRoomClient(data.room);
         }

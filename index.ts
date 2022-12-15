@@ -189,23 +189,20 @@ io.on("connection", (socket) => {
       players: getRealPlayers(room),
     });
   }
-  function updateCagnottes(room: string, cagnotte: CagnotteType): void {
-    io.in(room).emit("updateCagnottesResponse", {
-      cagnotte: cagnotte,
-      // players: getAllClientsWithSameRoom(dataRoom),
-    });
+  function updateCagnottes(
+    roomId: string,
+    cagnotte: CagnotteType,
+    newValue: number
+  ): void {
+    const room: RoomType = getTheRoom(roomId);
+    room.cagnottes.find((c) => c.name === cagnotte.name).value = newValue;
+    updateRoomClient(roomId);
   }
   function updatesVotes(dataRoom: string): void {
     const room: RoomType = getTheRoom(dataRoom);
 
     io.in(dataRoom).emit("voteResponse", {
       votes: room.votes,
-    });
-  }
-  function updatesInRoom(dataRoom: string): void {
-    const room: RoomType = getTheRoom(dataRoom);
-    socket.emit("statusGameResponse", {
-      isInGame: room.isGameLaunched,
     });
   }
 
@@ -475,14 +472,12 @@ io.on("connection", (socket) => {
     }) => {
       try {
         const room: RoomType = getTheRoom(data.room);
-        room.cagnottes.find((c) => c.name === data.cagnotteName).value =
-          data.newValue;
-        updateRoomClient(data.room);
 
-        //!
-        // io.in(data.room).emit("globalCagnoteAnimation", {
-        //   animationForInnocent: !data.isCagnottesTraitor,
-        // });
+        updateCagnottes(
+          data.room,
+          room.cagnottes.find((c) => c.name === data.cagnotteName),
+          data.newValue
+        );
       } catch (error) {
         console.error(error);
         sendError(error, data.room);
@@ -523,12 +518,19 @@ io.on("connection", (socket) => {
       try {
         const room: RoomType = getTheRoom(data.room);
         if (data.isGoodAnswer) {
-          room.cagnottes.find((c) => c.name === "innocent").value +=
-            data.numberPts;
+          updateCagnottes(
+            data.room,
+            room.cagnottes.find((c) => c.name === "innocent"),
+            room.cagnottes.find((c) => c.name === "innocent").value +
+              data.numberPts
+          );
         } else {
-          room.cagnottes.find((c) => c.name === "traitor").value +=
-            data.numberPts;
-          room.questionsMode.isShowResponse = true;
+          updateCagnottes(
+            data.room,
+            room.cagnottes.find((c) => c.name === "traitor"),
+            room.cagnottes.find((c) => c.name === "traitor").value +
+              data.numberPts
+          );
         }
 
         updateRoomClient(data.room);
@@ -563,13 +565,21 @@ io.on("connection", (socket) => {
       try {
         const room: RoomType = getTheRoom(data.room);
         if (data.isGoodAnswer) {
-          room.cagnottes.find((c) => c.name === "innocent").value +=
-            data.numberPts;
+          updateCagnottes(
+            data.room,
+            room.cagnottes.find((c) => c.name === "innocent"),
+            room.cagnottes.find((c) => c.name === "innocent").value +
+              data.numberPts
+          );
         } else {
-          room.cagnottes.find((c) => c.name === "traitor").value +=
-            data.numberPts;
-          room.justePrixMode.isShowResponse = true;
+          updateCagnottes(
+            data.room,
+            room.cagnottes.find((c) => c.name === "traitor"),
+            room.cagnottes.find((c) => c.name === "traitor").value +
+              data.numberPts
+          );
         }
+        console.log(typeof room.cagnottes.values);
 
         updateRoomClient(data.room);
       } catch (error) {
@@ -700,11 +710,19 @@ io.on("connection", (socket) => {
       try {
         const room: RoomType = getTheRoom(data.room);
         if (data.isGoodAnswer) {
-          room.cagnottes.find((c) => c.name === "innocent").value +=
-            data.numberPts;
+          updateCagnottes(
+            data.room,
+            room.cagnottes.find((c) => c.name === "innocent"),
+            room.cagnottes.find((c) => c.name === "innocent").value +
+              data.numberPts
+          );
         } else {
-          room.cagnottes.find((c) => c.name === "traitor").value +=
-            data.numberPts;
+          updateCagnottes(
+            data.room,
+            room.cagnottes.find((c) => c.name === "traitor"),
+            room.cagnottes.find((c) => c.name === "traitor").value +
+              data.numberPts
+          );
         }
 
         updateRoomClient(data.room);
