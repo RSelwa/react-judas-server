@@ -422,6 +422,7 @@ io.on("connection", function (socket) {
                 updateCagnottes(data.room, room.cagnottes.find(function (c) { return c.name === "traitor"; }), room.cagnottes.find(function (c) { return c.name === "traitor"; }).value +
                     data.numberPts);
             }
+            room.questionsMode.isShowResponse = true;
             updateRoomClient(data.room);
         }
         catch (error) {
@@ -454,7 +455,7 @@ io.on("connection", function (socket) {
                 updateCagnottes(data.room, room.cagnottes.find(function (c) { return c.name === "traitor"; }), room.cagnottes.find(function (c) { return c.name === "traitor"; }).value +
                     data.numberPts);
             }
-            console.log(typeof room.cagnottes.values);
+            room.justePrixMode.isShowResponse = true;
             updateRoomClient(data.room);
         }
         catch (error) {

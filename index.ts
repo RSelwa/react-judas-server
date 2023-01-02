@@ -532,7 +532,7 @@ io.on("connection", (socket) => {
               data.numberPts
           );
         }
-
+        room.questionsMode.isShowResponse = true;
         updateRoomClient(data.room);
       } catch (error) {
         console.error(error);
@@ -579,7 +579,7 @@ io.on("connection", (socket) => {
               data.numberPts
           );
         }
-        console.log(typeof room.cagnottes.values);
+        room.justePrixMode.isShowResponse = true;
 
         updateRoomClient(data.room);
       } catch (error) {
